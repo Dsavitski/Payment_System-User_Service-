@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: change_on_unique_number
+      author: Savitskiy
+      changes:
+        - addUniqueConstraint:
+            tableName: payment_cards
+            columnNames: number
+            constraintName: uk_payments-cards-number

@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/changeset/create-user-table.yaml
+  - include:
+      file: db/changelog/changeset/create-payment_card-table.yaml
+  - include:
+      file: db/changelog/changeset/add_audit-user-table.yaml
+  - include:
+      file: db/changelog/changeset/add_audit-payment_card-table.yaml
+  - include:
+      file: db/changelog/changeset/change_on_unique_field-user-table.yaml
+  - include:
+      file: db/changelog/changeset/change_on_unique_field-payment_card-table.yaml
+  - include:
+      file: db/changelog/changeset/add_indexes-users-table.yaml
+  - include:
+      file: db/changelog/changeset/add_indexes-payments_card-table.yaml
