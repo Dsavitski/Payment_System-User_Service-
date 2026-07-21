@@ -8,6 +8,7 @@ import lombok.Setter;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @NoArgsConstructor
@@ -30,4 +31,7 @@ public class User extends BaseEntity{
     private String email;
     @Column(name = "active", nullable = false)
     private boolean active;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<PaymentCard> paymentCards;
 }
