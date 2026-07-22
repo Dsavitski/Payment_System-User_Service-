@@ -19,6 +19,6 @@ public class UserDisplayDto {
     private boolean active;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private List<PaymentCard> paymentsCard;
+    private List<PaymentCardDisplayDto> paymentsCards;
 
 }

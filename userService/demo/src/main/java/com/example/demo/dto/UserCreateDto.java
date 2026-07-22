@@ -1,5 +1,6 @@
 package com.example.demo.dto;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -17,5 +18,6 @@ public class UserCreateDto {
     @NotNull(message = "Enter birth date")
     private LocalDate birthDate;
     @NotBlank(message = "Enter email")
+    @Email(message = "Invalid email")
     private String email;
 }
