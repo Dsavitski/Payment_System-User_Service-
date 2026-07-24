@@ -70,21 +70,20 @@ class PaymentCardControllerIT {
         return number.toString();
     }
 
-
     @Test
     void shouldCreatePaymentCard() throws Exception {
         User user = createUser();
 
         String json = """
-            {
-              "userId": %d,
-              "number": "1234567890123456",
-              "holder": "Alex Smith",
-              "expirationDate": "2030-01-01"
-            }
-            """.formatted(user.getId());
+                {
+                  "userId": %d,
+                  "number": "1234567890123456",
+                  "holder": "Alex Smith",
+                  "expirationDate": "2030-01-01"
+                }
+                """.formatted(user.getId());
 
-        mockMvc.perform(post("/payment-cards")
+        mockMvc.perform(post("/api/payment-cards")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json))
             .andExpect(status().isCreated())
@@ -99,7 +98,7 @@ class PaymentCardControllerIT {
         User user = createUser();
         PaymentCard card = createCard(user, true);
 
-        mockMvc.perform(get("/payment-cards/{id}", card.getId()))
+        mockMvc.perform(get("/api/payment-cards/{id}", card.getId()))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(card.getId()))
             .andExpect(jsonPath("$.holder").value("Alex Smith"))
@@ -112,15 +111,15 @@ class PaymentCardControllerIT {
         PaymentCard card = createCard(user, true);
 
         String json = """
-            {
-              "userId": %d,
-              "number": "9999888877776666",
-              "holder": "Updated Holder",
-              "expirationDate": "2032-01-01"
-            }
-            """.formatted(user.getId());
+                {
+                  "userId": %d,
+                  "number": "9999888877776666",
+                  "holder": "Updated Holder",
+                  "expirationDate": "2032-01-01"
+                }
+                """.formatted(user.getId());
 
-        mockMvc.perform(put("/payment-cards/{id}", card.getId())
+        mockMvc.perform(put("/api/payment-cards/{id}", card.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json))
             .andExpect(status().isOk())
@@ -128,6 +127,7 @@ class PaymentCardControllerIT {
             .andExpect(jsonPath("$.number").value("9999888877776666"));
 
         PaymentCard updatedCard = paymentCardRepository.findById(card.getId()).orElseThrow();
+
         assertThat(updatedCard.getHolder()).isEqualTo("Updated Holder");
         assertThat(updatedCard.getNumber()).isEqualTo("9999888877776666");
     }
@@ -138,7 +138,7 @@ class PaymentCardControllerIT {
         createCard(user, true);
         createCard(user, false);
 
-        mockMvc.perform(get("/payment-cards/user/{userId}", user.getId()))
+        mockMvc.perform(get("/api/payment-cards/user/{userId}", user.getId()))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.length()").value(2));
     }
@@ -149,7 +149,7 @@ class PaymentCardControllerIT {
         createCard(user, true);
         createCard(user, false);
 
-        mockMvc.perform(get("/payment-cards/user/{userId}/activeCards", user.getId()))
+        mockMvc.perform(get("/api/payment-cards/user/{userId}/activeCards", user.getId()))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.length()").value(1));
     }
@@ -159,7 +159,7 @@ class PaymentCardControllerIT {
         User user = createUser();
         createCard(user, true);
 
-        mockMvc.perform(get("/payment-cards")
+        mockMvc.perform(get("/api/payment-cards")
                 .param("page", "0")
                 .param("size", "10"))
             .andExpect(status().isOk())
@@ -173,7 +173,7 @@ class PaymentCardControllerIT {
         User user = createUser();
         PaymentCard card = createCard(user, true);
 
-        mockMvc.perform(delete("/payment-cards/{id}", card.getId()))
+        mockMvc.perform(delete("/api/payment-cards/{id}", card.getId()))
             .andExpect(status().isNoContent());
 
         assertThat(paymentCardRepository.findById(card.getId())).isEmpty();
@@ -185,11 +185,11 @@ class PaymentCardControllerIT {
         User user = createUser();
         PaymentCard card = createCard(user, false);
 
-        mockMvc.perform(patch("/payment-cards/{id}/activate", card.getId()))
+        mockMvc.perform(patch("/api/payment-cards/{id}/activate", card.getId()))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.active").value(true));
 
-        assertThat(paymentCardRepository.findById(card.getId()).get().isActive()).isTrue();
+        assertThat(paymentCardRepository.findById(card.getId()).orElseThrow().isActive()).isTrue();
     }
 
     @Test
@@ -197,10 +197,10 @@ class PaymentCardControllerIT {
         User user = createUser();
         PaymentCard card = createCard(user, true);
 
-        mockMvc.perform(patch("/payment-cards/{id}/deactivate", card.getId()))
+        mockMvc.perform(patch("/api/payment-cards/{id}/deactivate", card.getId()))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.active").value(false));
 
-        assertThat(paymentCardRepository.findById(card.getId()).get().isActive()).isFalse();
+        assertThat(paymentCardRepository.findById(card.getId()).orElseThrow().isActive()).isFalse();
     }
 }

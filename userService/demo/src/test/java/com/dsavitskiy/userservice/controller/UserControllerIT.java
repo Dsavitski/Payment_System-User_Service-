@@ -53,7 +53,7 @@ class UserControllerIT extends AbstractIntegrationTest {
                 }
                 """.formatted(email);
 
-        mockMvc.perform(post("/users")
+        mockMvc.perform(post("/api/users")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json))
             .andExpect(status().isCreated())
@@ -66,7 +66,7 @@ class UserControllerIT extends AbstractIntegrationTest {
 
         User user = createUser();
 
-        mockMvc.perform(get("/users/{id}", user.getId()))
+        mockMvc.perform(get("/api/users/{id}", user.getId()))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(user.getId()))
             .andExpect(jsonPath("$.name").value("Alex"))
@@ -77,27 +77,28 @@ class UserControllerIT extends AbstractIntegrationTest {
     void shouldUpdateUser() throws Exception {
 
         User user = createUser();
+        String updatedEmail = randomEmail();
 
         String json = """
                 {
                   "name":"Updated",
                   "surname":"Smith",
                   "birthDate":"1998-05-05",
-                  "email":"updated@test.com"
+                  "email":"%s"
                 }
-                """;
+                """.formatted(updatedEmail);
 
-        mockMvc.perform(put("/users/{id}", user.getId())
+        mockMvc.perform(put("/api/users/{id}", user.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.name").value("Updated"))
-            .andExpect(jsonPath("$.email").value("updated@test.com"));
+            .andExpect(jsonPath("$.email").value(updatedEmail));
 
         User updated = userRepository.findById(user.getId()).orElseThrow();
 
         assertEquals("Updated", updated.getName());
-        assertEquals("updated@test.com", updated.getEmail());
+        assertEquals(updatedEmail, updated.getEmail());
     }
 
     @Test
@@ -108,7 +109,7 @@ class UserControllerIT extends AbstractIntegrationTest {
         user.setActive(false);
         userRepository.save(user);
 
-        mockMvc.perform(patch("/users/{id}/activate", user.getId()))
+        mockMvc.perform(patch("/api/users/{id}/activate", user.getId()))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.active").value(true));
 
@@ -125,7 +126,7 @@ class UserControllerIT extends AbstractIntegrationTest {
         user.setActive(true);
         userRepository.save(user);
 
-        mockMvc.perform(patch("/users/{id}/deactivate", user.getId()))
+        mockMvc.perform(patch("/api/users/{id}/deactivate", user.getId()))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.active").value(false));
 
@@ -139,7 +140,7 @@ class UserControllerIT extends AbstractIntegrationTest {
 
         User user = createUser();
 
-        mockMvc.perform(delete("/users/{id}", user.getId()))
+        mockMvc.perform(delete("/api/users/{id}", user.getId()))
             .andExpect(status().isNoContent());
 
         assertFalse(userRepository.existsById(user.getId()));
