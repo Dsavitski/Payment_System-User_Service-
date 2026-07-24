@@ -20,8 +20,8 @@ repositories {
 
 sonar {
     properties {
-        property "sonar.projectKey", "Dsavitski_payment-system"
-        property "sonar.organization", "Dsavitski"
+        property "sonar.projectKey", "Dsavitski_Payment_System-User_Service-"
+        property "sonar.organization", "dsavitskiew"
         property "sonar.host.url", "https://sonarcloud.io"
     }
 }
