@@ -22,10 +22,8 @@ public abstract class AbstractIntegrationTest {
             .withUsername("postgres")
             .withPassword("postgres");
 
-
     @DynamicPropertySource
     static void configureDatabase(DynamicPropertyRegistry registry) {
-
         registry.add(
             "spring.datasource.url",
             postgres::getJdbcUrl

@@ -16,6 +16,8 @@ import java.util.Objects;
 @Slf4j
 public class GlobalExceptionHandler {
     private static final String MINSK_TIME_ZONE = "Europe/Minsk";
+
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponseDto> resourceNotFoundException(
             ResourceNotFoundException ex) {
@@ -52,5 +54,16 @@ public class GlobalExceptionHandler {
             HttpStatus.BAD_REQUEST.getReasonPhrase(),
             message);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponseDto> exception(Exception ex){
+        log.error("Unexpected error ", ex);
+        ErrorResponseDto response = new ErrorResponseDto(
+            LocalDateTime.now(ZoneId.of(MINSK_TIME_ZONE)),
+            HttpStatus.INTERNAL_SERVER_ERROR.value(),
+            HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+            "Internal Server Error");
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 }

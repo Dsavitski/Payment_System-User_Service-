@@ -32,10 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentCardServiceTest {
@@ -96,16 +93,29 @@ class PaymentCardServiceTest {
 
         assertNotNull(result);
         assertEquals(1L, result.getId());
+
+        verify(userRepository).findById(1L);
+        verify(paymentCardRepository).countByUserId(1L);
+        verify(paymentCardMapper).toEntity(createDto);
         verify(paymentCardRepository).save(paymentCard);
+        verify(paymentCardMapper).toDisplayDto(paymentCard);
+        verifyNoMoreInteractions(userRepository, paymentCardRepository, paymentCardMapper);
     }
 
     @Test
     void createPaymentCard_shouldThrowWhenUserNotFound() {
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> paymentCardService.createPaymentCard(createDto));
+        assertThrows(
+            ResourceNotFoundException.class,
+            () -> paymentCardService.createPaymentCard(createDto)
+        );
 
+        verify(userRepository).findById(1L);
+        verify(paymentCardRepository, never()).countByUserId(anyLong());
+        verify(paymentCardMapper, never()).toEntity(any());
         verify(paymentCardRepository, never()).save(any());
+        verify(paymentCardMapper, never()).toDisplayDto(any());
     }
 
     @Test
@@ -113,9 +123,15 @@ class PaymentCardServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(paymentCardRepository.countByUserId(1L)).thenReturn(5L);
 
-        assertThrows(PaymentCardLimitException.class, () -> paymentCardService.createPaymentCard(createDto));
-
+        assertThrows(
+            PaymentCardLimitException.class,
+            () -> paymentCardService.createPaymentCard(createDto)
+        );
+        verify(userRepository).findById(1L);
+        verify(paymentCardRepository).countByUserId(1L);
+        verify(paymentCardMapper, never()).toEntity(any());
         verify(paymentCardRepository, never()).save(any());
+        verify(paymentCardMapper, never()).toDisplayDto(any());
     }
 
     @Test
@@ -123,32 +139,48 @@ class PaymentCardServiceTest {
         when(paymentCardRepository.findById(1L)).thenReturn(Optional.of(paymentCard));
         when(paymentCardMapper.toDisplayDto(paymentCard)).thenReturn(displayDto);
 
-        PaymentCardDisplayDto result = paymentCardService.getPaymentCardById(1L);
+        PaymentCardDisplayDto result =
+            paymentCardService.getPaymentCardById(1L);
 
         assertNotNull(result);
         assertEquals(1L, result.getId());
+
+        verify(paymentCardRepository).findById(1L);
+        verify(paymentCardMapper).toDisplayDto(paymentCard);
     }
 
     @Test
     void getPaymentCardById_shouldThrowException() {
         when(paymentCardRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> paymentCardService.getPaymentCardById(1L));
+        assertThrows(
+            ResourceNotFoundException.class,
+            () -> paymentCardService.getPaymentCardById(1L)
+        );
+
+        verify(paymentCardRepository).findById(1L);
+        verify(paymentCardMapper, never()).toDisplayDto(any());
     }
 
     @Test
     void findAllCardsByUserId_shouldReturnCards() {
-        when(paymentCardRepository.findByUserId(1L)).thenReturn(List.of(paymentCard));
-        when(paymentCardMapper.toDisplayDto(paymentCard)).thenReturn(displayDto);
+        when(paymentCardRepository.findByUserId(1L))
+            .thenReturn(List.of(paymentCard));
+        when(paymentCardMapper.toDisplayDto(paymentCard))
+            .thenReturn(displayDto);
 
-        List<PaymentCardDisplayDto> result = paymentCardService.findAllCardsByUserId(1L);
+        List<PaymentCardDisplayDto> result =
+            paymentCardService.findAllCardsByUserId(1L);
 
         assertEquals(1, result.size());
+
+        verify(paymentCardRepository).findByUserId(1L);
+        verify(paymentCardMapper).toDisplayDto(paymentCard);
     }
 
     @Test
     void findAllCards_shouldReturnPage() {
-        Pageable pageable = PageRequest.of(0,10);
+        Pageable pageable = PageRequest.of(0, 10);
         Page<PaymentCard> page = new PageImpl<>(List.of(paymentCard));
 
         when(paymentCardRepository.findAll(
@@ -156,22 +188,35 @@ class PaymentCardServiceTest {
             eq(pageable)))
             .thenReturn(page);
 
-        when(paymentCardMapper.toDisplayDto(paymentCard)).thenReturn(displayDto);
+        when(paymentCardMapper.toDisplayDto(paymentCard))
+            .thenReturn(displayDto);
 
         Page<PaymentCardDisplayDto> result =
-            paymentCardService.findAllCards("Alex","Smith",pageable);
+            paymentCardService.findAllCards("Alex", "Smith", pageable);
 
-        assertEquals(1,result.getTotalElements());
+        assertEquals(1, result.getTotalElements());
+
+        verify(paymentCardRepository).findAll(
+            ArgumentMatchers.<org.springframework.data.jpa.domain.Specification<PaymentCard>>any(),
+            eq(pageable)
+        );
+        verify(paymentCardMapper).toDisplayDto(paymentCard);
     }
 
     @Test
     void findActiveCardsByUserId_shouldReturnCards() {
-        when(paymentCardRepository.findActiveCardsByUserId(1L)).thenReturn(List.of(paymentCard));
-        when(paymentCardMapper.toDisplayDto(paymentCard)).thenReturn(displayDto);
+        when(paymentCardRepository.findActiveCardsByUserId(1L))
+            .thenReturn(List.of(paymentCard));
+        when(paymentCardMapper.toDisplayDto(paymentCard))
+            .thenReturn(displayDto);
 
-        List<PaymentCardDisplayDto> result = paymentCardService.findActiveCardsByUserId(1L);
+        List<PaymentCardDisplayDto> result =
+            paymentCardService.findActiveCardsByUserId(1L);
 
         assertEquals(1, result.size());
+
+        verify(paymentCardRepository).findActiveCardsByUserId(1L);
+        verify(paymentCardMapper).toDisplayDto(paymentCard);
     }
 
     @Test
@@ -185,16 +230,26 @@ class PaymentCardServiceTest {
 
         assertNotNull(result);
         assertEquals("1111222233334444", paymentCard.getNumber());
+
+        verify(paymentCardRepository).findById(1L);
+        verify(userRepository).findById(1L);
         verify(paymentCardRepository).save(paymentCard);
+        verify(paymentCardMapper).toDisplayDto(paymentCard);
     }
 
     @Test
     void updateCard_shouldThrowWhenCardNotFound() {
         when(paymentCardRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> paymentCardService.updateCard(1L, createDto));
+        assertThrows(
+            ResourceNotFoundException.class,
+            () -> paymentCardService.updateCard(1L, createDto)
+        );
 
+        verify(paymentCardRepository).findById(1L);
         verify(paymentCardRepository, never()).save(any());
+        verify(userRepository, never()).findById(any());
+        verify(paymentCardMapper, never()).toDisplayDto(any());
     }
 
     @Test
@@ -202,9 +257,15 @@ class PaymentCardServiceTest {
         when(paymentCardRepository.findById(1L)).thenReturn(Optional.of(paymentCard));
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> paymentCardService.updateCard(1L, createDto));
+        assertThrows(
+            ResourceNotFoundException.class,
+            () -> paymentCardService.updateCard(1L, createDto)
+        );
 
+        verify(paymentCardRepository).findById(1L);
+        verify(userRepository).findById(1L);
         verify(paymentCardRepository, never()).save(any());
+        verify(paymentCardMapper, never()).toDisplayDto(any());
     }
 
     @Test
@@ -213,6 +274,7 @@ class PaymentCardServiceTest {
 
         paymentCardService.deleteCard(1L);
 
+        verify(paymentCardRepository).findById(1L);
         verify(paymentCardRepository).delete(paymentCard);
     }
 
@@ -220,8 +282,12 @@ class PaymentCardServiceTest {
     void deleteCard_shouldThrowException() {
         when(paymentCardRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> paymentCardService.deleteCard(1L));
+        assertThrows(
+            ResourceNotFoundException.class,
+            () -> paymentCardService.deleteCard(1L)
+        );
 
+        verify(paymentCardRepository).findById(1L);
         verify(paymentCardRepository, never()).delete(any(PaymentCard.class));
     }
 
@@ -236,13 +302,22 @@ class PaymentCardServiceTest {
 
         assertTrue(paymentCard.isActive());
         assertNotNull(result);
+
+        verify(paymentCardRepository).findById(1L);
+        verify(paymentCardMapper).toDisplayDto(paymentCard);
     }
 
     @Test
     void activateCard_shouldThrowException() {
         when(paymentCardRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> paymentCardService.activateCard(1L));
+        assertThrows(
+            ResourceNotFoundException.class,
+            () -> paymentCardService.activateCard(1L)
+        );
+
+        verify(paymentCardRepository).findById(1L);
+        verify(paymentCardMapper, never()).toDisplayDto(any());
     }
 
     @Test
@@ -256,12 +331,21 @@ class PaymentCardServiceTest {
 
         assertFalse(paymentCard.isActive());
         assertNotNull(result);
+
+        verify(paymentCardRepository).findById(1L);
+        verify(paymentCardMapper).toDisplayDto(paymentCard);
     }
 
     @Test
     void deactivateCard_shouldThrowException() {
         when(paymentCardRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> paymentCardService.deactivateCard(1L));
+        assertThrows(
+            ResourceNotFoundException.class,
+            () -> paymentCardService.deactivateCard(1L)
+        );
+
+        verify(paymentCardRepository).findById(1L);
+        verify(paymentCardMapper, never()).toDisplayDto(any());
     }
 }

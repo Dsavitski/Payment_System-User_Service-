@@ -60,9 +60,12 @@ class UserServiceTest {
 
     @Test
     void createUser_shouldCreateUser() {
-        when(userMapper.toEntity(createDto)).thenReturn(user);
-        when(userRepository.save(user)).thenReturn(user);
-        when(userMapper.toDisplayDto(user)).thenReturn(displayDto);
+        when(userMapper.toEntity(createDto))
+            .thenReturn(user);
+        when(userRepository.save(user))
+            .thenReturn(user);
+        when(userMapper.toDisplayDto(user))
+            .thenReturn(displayDto);
 
         UserDisplayDto result = userService.createUser(createDto);
 
@@ -77,8 +80,10 @@ class UserServiceTest {
 
     @Test
     void findUserById_shouldReturnUser() {
-        when(userRepository.findUserWithPaymentCardsById(1L)).thenReturn(Optional.of(user));
-        when(userMapper.toDisplayDto(user)).thenReturn(displayDto);
+        when(userRepository.findUserWithPaymentCardsById(1L))
+            .thenReturn(Optional.of(user));
+        when(userMapper.toDisplayDto(user))
+            .thenReturn(displayDto);
 
         UserDisplayDto result = userService.findUserById(1L);
 
@@ -91,18 +96,26 @@ class UserServiceTest {
 
     @Test
     void findUserById_shouldThrowResourceNotFoundException() {
-        when(userRepository.findUserWithPaymentCardsById(1L)).thenReturn(Optional.empty());
+        when(userRepository.findUserWithPaymentCardsById(1L))
+            .thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> userService.findUserById(1L));
+        assertThrows(
+            ResourceNotFoundException.class,
+            () -> userService.findUserById(1L)
+        );
 
+        verify(userRepository).findUserWithPaymentCardsById(1L);
         verify(userMapper, never()).toDisplayDto(any());
     }
 
     @Test
     void updateUser_shouldUpdateUser() {
-        when(userRepository.findUserWithPaymentCardsById(1L)).thenReturn(Optional.of(user));
-        when(userRepository.save(user)).thenReturn(user);
-        when(userMapper.toDisplayDto(user)).thenReturn(displayDto);
+        when(userRepository.findUserWithPaymentCardsById(1L))
+            .thenReturn(Optional.of(user));
+        when(userRepository.save(user))
+            .thenReturn(user);
+        when(userMapper.toDisplayDto(user))
+            .thenReturn(displayDto);
 
         UserDisplayDto result = userService.updateUser(1L, createDto);
 
@@ -119,16 +132,23 @@ class UserServiceTest {
 
     @Test
     void updateUser_shouldThrowResourceNotFoundException() {
-        when(userRepository.findUserWithPaymentCardsById(1L)).thenReturn(Optional.empty());
+        when(userRepository.findUserWithPaymentCardsById(1L))
+            .thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> userService.updateUser(1L, createDto));
+        assertThrows(
+            ResourceNotFoundException.class,
+            () -> userService.updateUser(1L, createDto)
+        );
 
+        verify(userRepository).findUserWithPaymentCardsById(1L);
         verify(userRepository, never()).save(any());
+        verify(userMapper, never()).toDisplayDto(any());
     }
 
     @Test
     void deleteUser_shouldDeleteUser() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.findById(1L))
+            .thenReturn(Optional.of(user));
 
         userService.deleteUser(1L);
 
@@ -149,14 +169,17 @@ class UserServiceTest {
     void activateUser_shouldActivateUser() {
         user.setActive(false);
 
-        when(userRepository.findUserWithPaymentCardsById(1L)).thenReturn(Optional.of(user));
-        when(userRepository.save(user)).thenReturn(user);
-        when(userMapper.toDisplayDto(user)).thenReturn(displayDto);
+        when(userRepository.findUserWithPaymentCardsById(1L))
+            .thenReturn(Optional.of(user));
+        when(userRepository.save(user))
+            .thenReturn(user);
+        when(userMapper.toDisplayDto(user))
+            .thenReturn(displayDto);
 
         UserDisplayDto result = userService.activateUser(1L);
 
-        assertTrue(user.isActive());
         assertNotNull(result);
+        assertTrue(user.isActive());
 
         verify(userRepository).findUserWithPaymentCardsById(1L);
         verify(userRepository).save(user);
@@ -165,25 +188,34 @@ class UserServiceTest {
 
     @Test
     void activateUser_shouldThrowResourceNotFoundException() {
-        when(userRepository.findUserWithPaymentCardsById(1L)).thenReturn(Optional.empty());
+        when(userRepository.findUserWithPaymentCardsById(1L))
+            .thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> userService.activateUser(1L));
+        assertThrows(
+            ResourceNotFoundException.class,
+            () -> userService.activateUser(1L)
+        );
 
+        verify(userRepository).findUserWithPaymentCardsById(1L);
         verify(userRepository, never()).save(any());
+        verify(userMapper, never()).toDisplayDto(any());
     }
 
     @Test
     void deactivateUser_shouldDeactivateUser() {
         user.setActive(true);
 
-        when(userRepository.findUserWithPaymentCardsById(1L)).thenReturn(Optional.of(user));
-        when(userRepository.save(user)).thenReturn(user);
-        when(userMapper.toDisplayDto(user)).thenReturn(displayDto);
+        when(userRepository.findUserWithPaymentCardsById(1L))
+            .thenReturn(Optional.of(user));
+        when(userRepository.save(user))
+            .thenReturn(user);
+        when(userMapper.toDisplayDto(user))
+            .thenReturn(displayDto);
 
         UserDisplayDto result = userService.deactivateUser(1L);
 
-        assertFalse(user.isActive());
         assertNotNull(result);
+        assertFalse(user.isActive());
 
         verify(userRepository).findUserWithPaymentCardsById(1L);
         verify(userRepository).save(user);
@@ -192,10 +224,16 @@ class UserServiceTest {
 
     @Test
     void deactivateUser_shouldThrowResourceNotFoundException() {
-        when(userRepository.findUserWithPaymentCardsById(1L)).thenReturn(Optional.empty());
+        when(userRepository.findUserWithPaymentCardsById(1L))
+            .thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> userService.deactivateUser(1L));
+        assertThrows(
+            ResourceNotFoundException.class,
+            () -> userService.deactivateUser(1L)
+        );
 
+        verify(userRepository).findUserWithPaymentCardsById(1L);
         verify(userRepository, never()).save(any());
+        verify(userMapper, never()).toDisplayDto(any());
     }
 }

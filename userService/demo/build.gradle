@@ -48,9 +48,6 @@ dependencies {
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.testcontainers:postgresql'
 
-
-    testRuntimeOnly 'com.h2database:h2'
-
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
 
@@ -70,6 +67,7 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
     finalizedBy jacocoTestReport
+    environment 'DOCKER_API_VERSION', '1.43'
 }
 
 jacoco {
