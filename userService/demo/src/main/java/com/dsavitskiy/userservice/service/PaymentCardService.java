@@ -85,14 +85,15 @@ public class PaymentCardService {
         allEntries = true
     )
     public PaymentCardDisplayDto updateCard(Long id, PaymentCardCreateDto paymentCardCreateDto) {
-        PaymentCard existingPaymentCard = paymentCardRepository.findById(id).orElseThrow(
-            ()-> new ResourceNotFoundException(N0_SUCH_PAYMENT_CARD));
-        User user = userRepository.findById(paymentCardCreateDto.getUserId()).orElseThrow(
-            ()-> new ResourceNotFoundException("User with such id not found!"));
+        PaymentCard existingPaymentCard = paymentCardRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException(N0_SUCH_PAYMENT_CARD));
+
+        User user = userRepository.findById(paymentCardCreateDto.getUserId())
+            .orElseThrow(() -> new ResourceNotFoundException("User with such id not found!"));
+
+        paymentCardMapper.updateEntity(paymentCardCreateDto, existingPaymentCard);
         existingPaymentCard.setUser(user);
-        existingPaymentCard.setNumber(paymentCardCreateDto.getNumber());
-        existingPaymentCard.setHolder(paymentCardCreateDto.getHolder());
-        existingPaymentCard.setExpirationDate(paymentCardCreateDto.getExpirationDate());
+
         PaymentCard savedPaymentCard = paymentCardRepository.save(existingPaymentCard);
         return paymentCardMapper.toDisplayDto(savedPaymentCard);
     }

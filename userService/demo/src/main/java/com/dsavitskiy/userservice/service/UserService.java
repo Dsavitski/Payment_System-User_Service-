@@ -39,10 +39,7 @@ public class UserService {
     public UserDisplayDto updateUser(Long id, UserCreateDto userCreateDto) {
         User existingUser = userRepository.findUserWithPaymentCardsById(id).orElseThrow(
             ()->new ResourceNotFoundException(NO_SUCH_PAYMENT_CARD));
-        existingUser.setName(userCreateDto.getName());
-        existingUser.setSurname(userCreateDto.getSurname());
-        existingUser.setBirthDate(userCreateDto.getBirthDate());
-        existingUser.setEmail(userCreateDto.getEmail());
+        userMapper.updateEntity(userCreateDto, existingUser);
         User savedUser = userRepository.save(existingUser);
         return userMapper.toDisplayDto(savedUser);
     }
