@@ -15,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.Month;
+import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -45,7 +47,7 @@ class PaymentCardControllerIT {
         user.setName("Alex");
         user.setSurname("Smith");
         user.setBirthDate(LocalDate.of(1995, Month.JANUARY, 1));
-        user.setEmail("alex@test.com");
+        user.setEmail(UUID.randomUUID() + "@test.com");
         user.setActive(true);
         return userRepository.save(user);
     }
@@ -53,11 +55,19 @@ class PaymentCardControllerIT {
     private PaymentCard createCard(User user, boolean isActive) {
         PaymentCard card = new PaymentCard();
         card.setUser(user);
-        card.setNumber("1111222233334444");
+        card.setNumber(generateCardNumber());
         card.setHolder("Alex Smith");
         card.setExpirationDate(LocalDate.now().plusYears(5));
         card.setActive(isActive);
         return paymentCardRepository.save(card);
+    }
+
+    private String generateCardNumber() {
+        StringBuilder number = new StringBuilder(16);
+        for (int i = 0; i < 16; i++) {
+            number.append(ThreadLocalRandom.current().nextInt(10));
+        }
+        return number.toString();
     }
 
 
@@ -93,7 +103,7 @@ class PaymentCardControllerIT {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(card.getId()))
             .andExpect(jsonPath("$.holder").value("Alex Smith"))
-            .andExpect(jsonPath("$.number").value("1111222233334444"));
+            .andExpect(jsonPath("$.number").value(card.getNumber()));
     }
 
     @Test
