@@ -9,25 +9,60 @@ on:
       - '**'
   workflow_dispatch:
 
+
 permissions:
   contents: read
   pull-requests: read
   packages: write
 
+
 jobs:
+
   ci:
-    name: Build, Test, Analyze & Publish
+    name: Build, Test, SonarQube Analysis & Docker Image
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: userService/demo
+
+    services:
+
+      postgres:
+        image: postgres:16
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_DB: Payment_System
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+
+
 
     steps:
+
+      # ==========================
+      # Checkout
+      # ==========================
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+
+
+      # ==========================
+      # Build
+      # ==========================
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
@@ -36,53 +71,85 @@ jobs:
           java-version: '21'
           cache: gradle
 
+
       - name: Make gradlew executable
+        working-directory: userService/demo
         run: chmod +x gradlew
 
-      - name: Build project
-        run: ./gradlew assemble
 
-      - name: Run tests
+      - name: Build
+        working-directory: userService/demo
+        run: ./gradlew assemble
+        env:
+          DB_URL: jdbc:postgresql://localhost:5432/Payment_System
+          DB_USERNAME: postgres
+          DB_PASSWORD: postgres
+
+
+
+      # ==========================
+      # Testing
+      # ==========================
+
+      - name: Testing
+        working-directory: userService/demo
         run: ./gradlew test
         env:
-          TESTCONTAINERS_RYUK_DISABLED: true
+          DB_URL: jdbc:postgresql://localhost:5432/Payment_System
+          DB_USERNAME: postgres
+          DB_PASSWORD: postgres
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
 
-      - name: SonarCloud Analysis
+
+
+      # ==========================
+      # SonarQube / SonarCloud
+      # ==========================
+
+      - name: Code Analysis - SonarCloud
+        working-directory: userService/demo
+        run: ./gradlew sonar
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: ./gradlew sonar
+
+
+
+      # ==========================
+      # Docker Artifact Creation
+      # ==========================
 
       - name: Set up Docker Buildx
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         uses: docker/setup-buildx-action@v3
 
+
+
       - name: Login to GitHub Container Registry
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract Docker metadata
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+
+
+      - name: Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            type=ref,event=branch
             type=sha
+            type=ref,event=branch
 
-      - name: Build and Push Docker image
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+
+
+      - name: Build Docker Image
         uses: docker/build-push-action@v6
         with:
-          context: ./demo
-          file: ./demo/Dockerfile
+          context: ./userService/demo
+          file: ./userService/demo/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
