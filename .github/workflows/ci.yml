@@ -9,22 +9,17 @@ on:
       - '**'
   workflow_dispatch:
 
-
 permissions:
   contents: read
   pull-requests: read
   packages: write
 
-
 jobs:
-
   ci:
-    name: Build, Test, SonarQube Analysis & Docker Image
+    name: Build, Test, SonarCloud Analysis & Docker Image
     runs-on: ubuntu-latest
 
-
     services:
-
       postgres:
         image: postgres:16
         ports:
@@ -39,16 +34,12 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
-
       redis:
         image: redis:7
         ports:
           - 6379:6379
 
-
-
     steps:
-
 
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -87,8 +78,6 @@ jobs:
           REDIS_HOST: localhost
           REDIS_PORT: 6379
 
-
-
       - name: Code Analysis - SonarCloud
         working-directory: userService/demo
         run: ./gradlew sonar
@@ -96,10 +85,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
 
 
       - name: Login to GitHub Container Registry
@@ -110,19 +97,17 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
 
-
       - name: Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}
+          images: ghcr.io/dsavitski/payment-system-user-service
           tags: |
             type=sha
             type=ref,event=branch
 
 
-
-      - name: Build Docker Image
+      - name: Build and Push Docker Image
         uses: docker/build-push-action@v6
         with:
           context: ./userService/demo
