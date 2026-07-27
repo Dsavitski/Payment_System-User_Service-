@@ -4,23 +4,29 @@ import com.dsavitskiy.userservice.entity.PaymentCard;
 import com.dsavitskiy.userservice.entity.User;
 import com.dsavitskiy.userservice.repository.PaymentCardRepository;
 import com.dsavitskiy.userservice.repository.UserRepository;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.Month;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
@@ -35,6 +41,9 @@ class PaymentCardControllerIT {
 
     @Autowired
     private PaymentCardRepository paymentCardRepository;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
@@ -70,39 +79,60 @@ class PaymentCardControllerIT {
         return number.toString();
     }
 
+    private <T> T performAndGetResponse(MockHttpServletRequestBuilder request, Class<T> responseType) throws Exception {
+        MvcResult result = mockMvc.perform(request)
+            .andExpect(status().is2xxSuccessful())
+            .andReturn();
+
+        String responseContent = result.getResponse().getContentAsString();
+        return objectMapper.readValue(responseContent, responseType);
+    }
+
+    private <T> List<T> performAndGetListResponse(MockHttpServletRequestBuilder request, Class<T> elementType) throws Exception {
+        MvcResult result = mockMvc.perform(request)
+            .andExpect(status().is2xxSuccessful())
+            .andReturn();
+
+        String responseContent = result.getResponse().getContentAsString();
+        return objectMapper.readValue(responseContent, objectMapper.getTypeFactory().constructCollectionType(List.class, elementType));
+    }
+
     @Test
     void shouldCreatePaymentCard() throws Exception {
         User user = createUser();
 
         String json = """
                 {
-                  "userId": %d,
+                  "userId": "%s",
                   "number": "1234567890123456",
                   "holder": "Alex Smith",
                   "expirationDate": "2030-01-01"
                 }
                 """.formatted(user.getId());
 
-        mockMvc.perform(post("/api/payment-cards")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(json))
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.number").value("1234567890123456"))
-            .andExpect(jsonPath("$.holder").value("Alex Smith"));
+        PaymentCard createdCard = performAndGetResponse(
+            post("/api/payment-cards").contentType(MediaType.APPLICATION_JSON).content(json),
+            PaymentCard.class
+        );
 
+        assertThat(createdCard.getNumber()).isEqualTo("1234567890123456");
+        assertThat(createdCard.getHolder()).isEqualTo("Alex Smith");
         assertThat(paymentCardRepository.count()).isEqualTo(1);
     }
 
     @Test
     void shouldGetPaymentCardById() throws Exception {
         User user = createUser();
-        PaymentCard card = createCard(user, true);
+        PaymentCard expectedCard = createCard(user, true);
 
-        mockMvc.perform(get("/api/payment-cards/{id}", card.getId()))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value(card.getId()))
-            .andExpect(jsonPath("$.holder").value("Alex Smith"))
-            .andExpect(jsonPath("$.number").value(card.getNumber()));
+        PaymentCard actualCard = performAndGetResponse(
+            get("/api/payment-cards/{id}", expectedCard.getId()),
+            PaymentCard.class
+        );
+
+        assertThat(actualCard.getId()).isEqualTo(expectedCard.getId());
+        assertThat(actualCard.getHolder()).isEqualTo(expectedCard.getHolder());
+        assertThat(actualCard.getNumber()).isEqualTo(expectedCard.getNumber());
     }
 
     @Test
@@ -112,24 +142,24 @@ class PaymentCardControllerIT {
 
         String json = """
                 {
-                  "userId": %d,
+                  "userId": "%s",
                   "number": "9999888877776666",
                   "holder": "Updated Holder",
                   "expirationDate": "2032-01-01"
                 }
                 """.formatted(user.getId());
 
-        mockMvc.perform(put("/api/payment-cards/{id}", card.getId())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(json))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.holder").value("Updated Holder"))
-            .andExpect(jsonPath("$.number").value("9999888877776666"));
+        PaymentCard updatedResponseCard = performAndGetResponse(
+            put("/api/payment-cards/{id}", card.getId()).contentType(MediaType.APPLICATION_JSON).content(json),
+            PaymentCard.class
+        );
 
-        PaymentCard updatedCard = paymentCardRepository.findById(card.getId()).orElseThrow();
+        assertThat(updatedResponseCard.getHolder()).isEqualTo("Updated Holder");
+        assertThat(updatedResponseCard.getNumber()).isEqualTo("9999888877776666");
 
-        assertThat(updatedCard.getHolder()).isEqualTo("Updated Holder");
-        assertThat(updatedCard.getNumber()).isEqualTo("9999888877776666");
+        PaymentCard dbCard = paymentCardRepository.findById(card.getId()).orElseThrow();
+        assertThat(dbCard.getHolder()).isEqualTo("Updated Holder");
+        assertThat(dbCard.getNumber()).isEqualTo("9999888877776666");
     }
 
     @Test
@@ -138,9 +168,12 @@ class PaymentCardControllerIT {
         createCard(user, true);
         createCard(user, false);
 
-        mockMvc.perform(get("/api/payment-cards/user/{userId}", user.getId()))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.length()").value(2));
+        List<PaymentCard> cards = performAndGetListResponse(
+            get("/api/payment-cards/user/{userId}", user.getId()),
+            PaymentCard.class
+        );
+
+        assertThat(cards).hasSize(2);
     }
 
     @Test
@@ -149,9 +182,13 @@ class PaymentCardControllerIT {
         createCard(user, true);
         createCard(user, false);
 
-        mockMvc.perform(get("/api/payment-cards/user/{userId}/activeCards", user.getId()))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.length()").value(1));
+        List<PaymentCard> activeCards = performAndGetListResponse(
+            get("/api/payment-cards/user/{userId}/activeCards", user.getId()),
+            PaymentCard.class
+        );
+
+        assertThat(activeCards).hasSize(1);
+        assertThat(activeCards.get(0).isActive()).isTrue();
     }
 
     @Test
@@ -159,13 +196,20 @@ class PaymentCardControllerIT {
         User user = createUser();
         createCard(user, true);
 
-        mockMvc.perform(get("/api/payment-cards")
+        MvcResult result = mockMvc.perform(get("/api/payment-cards")
                 .param("page", "0")
                 .param("size", "10"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.content.length()").value(1))
-            .andExpect(jsonPath("$.totalElements").value(1))
-            .andExpect(jsonPath("$.totalPages").value(1));
+            .andReturn();
+
+        Page<PaymentCard> page = objectMapper.readValue(
+            result.getResponse().getContentAsString(),
+            objectMapper.getTypeFactory().constructType(new TypeReference<Page<PaymentCard>>() {})
+        );
+
+        assertThat(page.getContent()).hasSize(1);
+        assertThat(page.getTotalElements()).isEqualTo(1);
+        assertThat(page.getTotalPages()).isEqualTo(1);
     }
 
     @Test
@@ -185,10 +229,12 @@ class PaymentCardControllerIT {
         User user = createUser();
         PaymentCard card = createCard(user, false);
 
-        mockMvc.perform(patch("/api/payment-cards/{id}/activate", card.getId()))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.active").value(true));
+        PaymentCard responseCard = performAndGetResponse(
+            patch("/api/payment-cards/{id}/activate", card.getId()),
+            PaymentCard.class
+        );
 
+        assertThat(responseCard.isActive()).isTrue();
         assertThat(paymentCardRepository.findById(card.getId()).orElseThrow().isActive()).isTrue();
     }
 
@@ -197,10 +243,12 @@ class PaymentCardControllerIT {
         User user = createUser();
         PaymentCard card = createCard(user, true);
 
-        mockMvc.perform(patch("/api/payment-cards/{id}/deactivate", card.getId()))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.active").value(false));
+        PaymentCard responseCard = performAndGetResponse(
+            patch("/api/payment-cards/{id}/deactivate", card.getId()),
+            PaymentCard.class
+        );
 
+        assertThat(responseCard.isActive()).isFalse();
         assertThat(paymentCardRepository.findById(card.getId()).orElseThrow().isActive()).isFalse();
     }
 }

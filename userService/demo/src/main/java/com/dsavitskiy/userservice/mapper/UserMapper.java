@@ -9,13 +9,20 @@ import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring")
 public interface UserMapper {
-    public User toEntity(UserCreateDto userCreateDto);
-    public UserDisplayDto toDisplayDto(User user);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "paymentCards", ignore = true)
     @Mapping(target = "active", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "paymentCards", ignore = true)
+    User toEntity(UserCreateDto userCreateDto);
+
+    UserDisplayDto toDisplayDto(User user);
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "active", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "paymentCards", ignore = true)
     void updateEntity(UserCreateDto userCreateDto, @MappingTarget User user);
 }

@@ -23,7 +23,7 @@ public class PaymentCardController {
 
     @PostMapping
     public ResponseEntity<PaymentCardDisplayDto> createPaymentCard(
-        @Valid @RequestBody PaymentCardCreateDto paymentCardCreateDto) {
+            @Valid @RequestBody PaymentCardCreateDto paymentCardCreateDto) {
         PaymentCardDisplayDto paymentCard =
             paymentCardService.createPaymentCard(paymentCardCreateDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(paymentCard);

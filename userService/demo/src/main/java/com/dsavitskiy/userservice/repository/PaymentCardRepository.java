@@ -4,9 +4,11 @@ import com.dsavitskiy.userservice.entity.PaymentCard;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+@Repository
 public interface PaymentCardRepository extends JpaRepository<PaymentCard, Long>,
     JpaSpecificationExecutor<PaymentCard> {
     @Query("SELECT p from PaymentCard as p where p.user.id= :userId")

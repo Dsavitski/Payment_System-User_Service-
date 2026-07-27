@@ -10,16 +10,34 @@ import org.mapstruct.MappingTarget;
 @Mapper(componentModel = "spring")
 public interface PaymentCardMapper {
 
+    @Mapping(target = "id", ignore = true)
     @Mapping(target = "user", ignore = true)
+    @Mapping(target = "number", source = "number")
+    @Mapping(target = "holder", source = "holder")
+    @Mapping(target = "expirationDate", source = "expirationDate")
+    @Mapping(target = "active", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
     PaymentCard toEntity(PaymentCardCreateDto dto);
 
-    @Mapping(source = "user.id", target = "userId")
+    @Mapping(target = "id", source = "id")
+    @Mapping(target = "userId", source = "user.id")
+    @Mapping(target = "number", source = "number")
+    @Mapping(target = "holder", source = "holder")
+    @Mapping(target = "expirationDate", source = "expirationDate")
+    @Mapping(target = "active", source = "active")
+    @Mapping(target = "createdAt", source = "createdAt")
+    @Mapping(target = "updatedAt", source = "updatedAt")
     PaymentCardDisplayDto toDisplayDto(PaymentCard entity);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "user", ignore = true)
+    @Mapping(target = "number", source = "number")
+    @Mapping(target = "holder", source = "holder")
+    @Mapping(target = "expirationDate", source = "expirationDate")
+    @Mapping(target = "active", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(target = "active", ignore = true)
     void updateEntity(PaymentCardCreateDto dto,
                       @MappingTarget PaymentCard entity);
 }

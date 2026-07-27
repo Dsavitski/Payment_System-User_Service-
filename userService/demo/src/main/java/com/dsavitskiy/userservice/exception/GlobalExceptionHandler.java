@@ -16,12 +16,12 @@ import java.util.Objects;
 @Slf4j
 public class GlobalExceptionHandler {
     private static final String MINSK_TIME_ZONE = "Europe/Minsk";
-
+    private static final String LOG_WARNS = "HTTP {}: {}";
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponseDto> resourceNotFoundException(
             ResourceNotFoundException ex) {
-        log.error(ex.getMessage());
+        log.warn(LOG_WARNS, HttpStatus.NOT_FOUND.value(), ex.getMessage());
         ErrorResponseDto response = new ErrorResponseDto(
             LocalDateTime.now(ZoneId.of(MINSK_TIME_ZONE)),
             HttpStatus.NOT_FOUND.value(),
@@ -33,8 +33,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(PaymentCardLimitException.class)
     public ResponseEntity<ErrorResponseDto> paymentCardLimitException(
         PaymentCardLimitException ex){
-
-        log.error(ex.getMessage());
+        log.warn(LOG_WARNS, HttpStatus.CONFLICT.value(), ex.getMessage());
         ErrorResponseDto response = new ErrorResponseDto(
             LocalDateTime.now(ZoneId.of(MINSK_TIME_ZONE)),
             HttpStatus.CONFLICT.value(),
@@ -48,6 +47,7 @@ public class GlobalExceptionHandler {
         MethodArgumentNotValidException ex){
         String message = Objects.requireNonNull(
             ex.getBindingResult().getFieldError()).getDefaultMessage();
+        log.warn(LOG_WARNS, HttpStatus.BAD_REQUEST.value(), message);
         ErrorResponseDto response = new ErrorResponseDto(
             LocalDateTime.now(ZoneId.of(MINSK_TIME_ZONE)),
             HttpStatus.BAD_REQUEST.value(),
