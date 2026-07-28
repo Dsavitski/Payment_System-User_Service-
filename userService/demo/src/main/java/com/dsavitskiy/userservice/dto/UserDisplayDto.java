@@ -1,16 +1,16 @@
-package com.example.demo.dto;
+package com.dsavitskiy.userservice.dto;
 
-import com.example.demo.entity.PaymentCard;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
 @Setter
-public class UserDisplayDto {
+public class UserDisplayDto implements Serializable {
     private Long id;
     private String name;
     private String surname;
@@ -19,6 +19,5 @@ public class UserDisplayDto {
     private boolean active;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private List<PaymentCard> paymentsCard;
-
+    private List<PaymentCardDisplayDto> paymentCards;
 }

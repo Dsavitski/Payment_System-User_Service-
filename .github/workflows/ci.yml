@@ -1,0 +1,121 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+  packages: write
+
+jobs:
+  ci:
+    name: Build, Test, SonarCloud Analysis & Docker Image
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_DB: Payment_System
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+
+      - name: Make gradlew executable
+        working-directory: userService/demo
+        run: chmod +x gradlew
+
+
+      - name: Build
+        working-directory: userService/demo
+        run: ./gradlew assemble
+        env:
+          DB_URL: jdbc:postgresql://localhost:5432/Payment_System
+          DB_USERNAME: postgres
+          DB_PASSWORD: postgres
+
+      - name: Testing
+        working-directory: userService/demo
+        run: ./gradlew test
+        env:
+          DB_URL: jdbc:postgresql://localhost:5432/Payment_System
+          DB_USERNAME: postgres
+          DB_PASSWORD: postgres
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+
+      - name: Code Analysis - SonarCloud
+        if: github.event_name == 'push'
+        working-directory: userService/demo
+        run: ./gradlew sonar -Dsonar.branch.name=${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+
+      - name: Login to GitHub Container Registry
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+
+      - name: Docker metadata
+        if: github.event_name == 'push'
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/dsavitski/payment-system-user-service
+          tags: |
+            type=sha
+            type=ref,event=branch
+
+
+      - name: Build and Push Docker Image
+        if: github.event_name == 'push'
+        uses: docker/build-push-action@v6
+        with:
+          context: ./userService/demo
+          file: ./userService/demo/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

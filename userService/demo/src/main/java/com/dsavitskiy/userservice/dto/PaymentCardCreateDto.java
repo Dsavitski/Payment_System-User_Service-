@@ -1,4 +1,4 @@
-package com.example.demo.dto;
+package com.dsavitskiy.userservice.dto;
 
 import jakarta.validation.constraints.*;
 import lombok.Getter;
