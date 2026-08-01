@@ -159,6 +159,7 @@ class UserControllerIT extends AbstractIntegrationTest {
 
     private User createUser() {
         User user = new User();
+        user.setId(UUID.randomUUID());
         user.setName("Alex");
         user.setSurname("Smith");
         user.setBirthDate(LocalDate.of(1995, Month.JANUARY, 1));

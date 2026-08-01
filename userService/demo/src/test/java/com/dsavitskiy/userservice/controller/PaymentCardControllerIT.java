@@ -54,6 +54,7 @@ class PaymentCardControllerIT {
 
     private User createUser() {
         User user = new User();
+        user.setId(UUID.randomUUID());
         user.setName("Alex");
         user.setSurname("Smith");
         user.setBirthDate(LocalDate.of(1995, Month.JANUARY, 1));
@@ -119,7 +120,7 @@ class PaymentCardControllerIT {
 
         String json = """
             {
-              "userId": %d,
+              "userId": "%s",
               "number": "1234567890123456",
               "holder": "Alex Smith",
               "expirationDate": "2030-01-01"
@@ -167,7 +168,7 @@ class PaymentCardControllerIT {
 
         String json = """
             {
-              "userId": %d,
+              "userId": "%s",
               "number": "9999888877776666",
               "holder": "Updated Holder",
               "expirationDate": "2032-01-01"
