@@ -15,7 +15,7 @@ databaseChangeLog:
                     nullable: false
               - column:
                   name: user_id
-                  type: bigint
+                  type: UUID
                   constraints:
                     nullable: false
                     foreignKeyName: fk_payment_card_user

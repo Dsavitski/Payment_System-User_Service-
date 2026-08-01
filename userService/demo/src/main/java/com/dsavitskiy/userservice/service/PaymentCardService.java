@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -68,7 +69,7 @@ public class PaymentCardService {
         return paymentCardMapper.toDisplayDto(paymentCard);
     }
     @Cacheable(value = "payment_cards_by_user_id", key = "#userId")
-    public List<PaymentCardDisplayDto> findAllCardsByUserId(Long userId) {
+    public List<PaymentCardDisplayDto> findAllCardsByUserId(UUID userId) {
         log.debug("Getting all payment cards for user {}", userId);
         return paymentCardRepository.findByUserId(userId).stream().map(
             paymentCardMapper::toDisplayDto).toList();
@@ -85,7 +86,7 @@ public class PaymentCardService {
     }
     @Cacheable(value = "payment_cards_active", key = "#userId")
     @Transactional(readOnly = true)
-    public List<PaymentCardDisplayDto> findActiveCardsByUserId(Long userId) {
+    public List<PaymentCardDisplayDto> findActiveCardsByUserId(UUID userId) {
         log.debug("Getting active payment cards for user {}", userId);
         List<PaymentCard> activePaymentCards = paymentCardRepository.findActiveCardsByUserId(userId);
         return activePaymentCards.stream().map(paymentCardMapper::toDisplayDto).toList();

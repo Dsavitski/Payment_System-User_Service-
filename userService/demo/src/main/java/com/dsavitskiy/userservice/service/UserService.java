@@ -14,6 +14,8 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -27,6 +29,7 @@ public class UserService {
     public UserDisplayDto createUser(UserCreateDto userCreateDto) {
         log.info("Creating user with email {}", userCreateDto.getEmail());
         User user = userMapper.toEntity(userCreateDto);
+        user.setActive(true);
         User savedUser = userRepository.save(user);
         log.info("User {} created", savedUser.getId());
         return userMapper.toDisplayDto(savedUser);
@@ -34,7 +37,7 @@ public class UserService {
 
     @Cacheable(value = "users",key = "#id")
     @Transactional(readOnly = true)
-    public UserDisplayDto findUserById(Long id) {
+    public UserDisplayDto findUserById(UUID id) {
         log.debug("Getting user {}", id);
         User user = userRepository.findUserWithPaymentCardsById(id)
             .orElseThrow(() -> {
@@ -46,7 +49,7 @@ public class UserService {
 
     @Transactional
     @CachePut(value = "users",key = "#id")
-    public UserDisplayDto updateUser(Long id, UserCreateDto userCreateDto) {
+    public UserDisplayDto updateUser(UUID id, UserCreateDto userCreateDto) {
         log.info("Updating user {}", id);
         User existingUser = userRepository.findUserWithPaymentCardsById(id)
             .orElseThrow(() -> {
@@ -61,7 +64,7 @@ public class UserService {
 
     @Transactional
     @CacheEvict(value = "users",key = "#id")
-    public void deleteUser(Long id) {
+    public void deleteUser(UUID id) {
         log.info("Deleting user {}", id);
         User user = userRepository.findById(id)
             .orElseThrow(() -> {
@@ -74,7 +77,7 @@ public class UserService {
 
     @Transactional
     @CachePut(value = "users",key = "#id")
-    public UserDisplayDto activateUser(Long id) {
+    public UserDisplayDto activateUser(UUID id) {
         log.info("Activating user {}", id);
         User user = userRepository.findUserWithPaymentCardsById(id)
             .orElseThrow(() -> {
@@ -89,7 +92,7 @@ public class UserService {
 
     @Transactional
     @CachePut(value = "users",key = "#id")
-    public UserDisplayDto deactivateUser(Long id) {
+    public UserDisplayDto deactivateUser(UUID id) {
         log.info("Deactivating user {}", id);
         User user = userRepository.findUserWithPaymentCardsById(id)
             .orElseThrow(() -> {

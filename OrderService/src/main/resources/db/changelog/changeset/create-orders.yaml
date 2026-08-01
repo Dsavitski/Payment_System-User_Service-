@@ -1,49 +1,40 @@
 databaseChangeLog:
   - changeSet:
-      id: create-users
+      id: create-orders
       author: Savitskiy
       changes:
-        - sql:
-            sql: CREATE EXTENSION IF NOT EXISTS pgcrypto
-
         - createTable:
-            tableName: users
+            tableName: orders
             columns:
+
               - column:
                   name: id
-                  type: UUID
-                  defaultValueComputed: gen_random_uuid()
+                  type: bigint
+                  autoIncrement: true
                   constraints:
                     primaryKey: true
                     nullable: false
 
               - column:
-                  name: name
-                  type: varchar(255)
+                  name: user_id
+                  type: bigint
                   constraints:
                     nullable: false
 
               - column:
-                  name: surname
-                  type: varchar(255)
+                  name: status
+                  type: varchar(50)
                   constraints:
                     nullable: false
 
               - column:
-                  name: birth_date
-                  type: date
+                  name: total_price
+                  type: decimal(10,2)
                   constraints:
                     nullable: false
 
               - column:
-                  name: email
-                  type: varchar(255)
-                  constraints:
-                    nullable: false
-
-              - column:
-                  name: active
+                  name: deleted
                   type: boolean
-                  defaultValueBoolean: true
                   constraints:
                     nullable: false
