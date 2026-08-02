@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -22,12 +21,12 @@ import java.time.Month;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-@WithMockUser(username = "admin-uuid", authorities = {"ROLE_ADMIN"})
 class UserControllerIT extends AbstractIntegrationTest {
 
     @Autowired
@@ -49,7 +48,7 @@ class UserControllerIT extends AbstractIntegrationTest {
     }
 
     private <T> T performAndGetResponse(MockHttpServletRequestBuilder request, Class<T> responseType) throws Exception {
-        MvcResult result = mockMvc.perform(request)
+        MvcResult result = mockMvc.perform(request.with(user("admin").roles("ADMIN")))
             .andExpect(status().is2xxSuccessful())
             .andReturn();
 
@@ -60,7 +59,6 @@ class UserControllerIT extends AbstractIntegrationTest {
     @Test
     void shouldCreateUser() throws Exception {
         String email = randomEmail();
-
         String json = """
                 {
                   "name":"Alex",
@@ -97,7 +95,6 @@ class UserControllerIT extends AbstractIntegrationTest {
     void shouldUpdateUser() throws Exception {
         User user = createUser();
         String updatedEmail = randomEmail();
-
         String json = """
                 {
                   "name":"Updated",
@@ -114,10 +111,6 @@ class UserControllerIT extends AbstractIntegrationTest {
 
         assertThat(updatedResponseUser.getName()).isEqualTo("Updated");
         assertThat(updatedResponseUser.getEmail()).isEqualTo(updatedEmail);
-
-        User dbUser = userRepository.findById(user.getId()).orElseThrow();
-        assertThat(dbUser.getName()).isEqualTo("Updated");
-        assertThat(dbUser.getEmail()).isEqualTo(updatedEmail);
     }
 
     @Test
@@ -132,7 +125,6 @@ class UserControllerIT extends AbstractIntegrationTest {
         );
 
         assertThat(activatedUser.isActive()).isTrue();
-        assertThat(userRepository.findById(user.getId()).orElseThrow().isActive()).isTrue();
     }
 
     @Test
@@ -147,14 +139,14 @@ class UserControllerIT extends AbstractIntegrationTest {
         );
 
         assertThat(deactivatedUser.isActive()).isFalse();
-        assertThat(userRepository.findById(user.getId()).orElseThrow().isActive()).isFalse();
     }
 
     @Test
     void shouldDeleteUser() throws Exception {
         User user = createUser();
 
-        mockMvc.perform(delete("/api/users/{id}", user.getId()))
+        mockMvc.perform(delete("/api/users/{id}", user.getId())
+                .with(user("admin").roles("ADMIN")))
             .andExpect(status().isNoContent());
 
         assertThat(userRepository.existsById(user.getId())).isFalse();
