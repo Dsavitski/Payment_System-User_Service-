@@ -26,7 +26,7 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -83,7 +83,8 @@ class PaymentCardControllerIT {
     }
 
     private <T> T performAndGetResponse(MockHttpServletRequestBuilder request, Class<T> responseType) throws Exception {
-        MvcResult result = mockMvc.perform(request.with(user("admin").roles("ADMIN")))
+        MvcResult result = mockMvc.perform(request.with(jwt().jwt(j ->
+                j.claim("realm_access", Map.of("roles", List.of("ADMIN"))))))
             .andExpect(status().is2xxSuccessful())
             .andReturn();
 
@@ -91,7 +92,8 @@ class PaymentCardControllerIT {
     }
 
     private <T> List<T> performAndGetListResponse(MockHttpServletRequestBuilder request, Class<T> elementType) throws Exception {
-        MvcResult result = mockMvc.perform(request.with(user("admin").roles("ADMIN")))
+        MvcResult result = mockMvc.perform(request.with(jwt().jwt(j ->
+                j.claim("realm_access", Map.of("roles", List.of("ADMIN"))))))
             .andExpect(status().is2xxSuccessful())
             .andReturn();
 
@@ -194,7 +196,7 @@ class PaymentCardControllerIT {
                 get("/api/payment-cards")
                     .param("page", "0")
                     .param("size", "10")
-                    .with(user("admin").roles("ADMIN"))
+                    .with(jwt().jwt(j -> j.claim("realm_access", Map.of("roles", List.of("ADMIN")))))
             )
             .andExpect(status().isOk())
             .andReturn();
@@ -218,7 +220,7 @@ class PaymentCardControllerIT {
         PaymentCard card = createCard(user, true);
 
         mockMvc.perform(delete("/api/payment-cards/{id}", card.getId())
-                .with(user("admin").roles("ADMIN")))
+                .with(jwt().jwt(j -> j.claim("realm_access", Map.of("roles", List.of("ADMIN"))))))
             .andExpect(status().isNoContent());
 
         assertThat(paymentCardRepository.findById(card.getId())).isEmpty();
