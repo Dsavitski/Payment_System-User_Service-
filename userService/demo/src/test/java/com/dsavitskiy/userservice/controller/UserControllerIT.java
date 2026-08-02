@@ -3,116 +3,58 @@ package com.dsavitskiy.userservice.controller;
 import com.dsavitskiy.userservice.AbstractIntegrationTest;
 import com.dsavitskiy.userservice.dto.UserDisplayDto;
 import com.dsavitskiy.userservice.entity.User;
+import com.dsavitskiy.userservice.repository.PaymentCardRepository;
 import com.dsavitskiy.userservice.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
 
 import java.time.LocalDate;
 import java.time.Month;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@AutoConfigureMockMvc
-class UserControllerIT extends AbstractIntegrationTest {
+public class UserControllerIT extends AbstractIntegrationTest {
 
     @Autowired
-    private WebApplicationContext webApplicationContext;
-
     private MockMvc mockMvc;
 
     @Autowired
     private UserRepository userRepository;
 
     @Autowired
+    private PaymentCardRepository paymentCardRepository;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     @BeforeEach
-    void setUp() {
-        // Этот способ инициализации гарантированно работает и убирает ошибку IDE
-        this.mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+    void cleanDatabase() {
+        paymentCardRepository.deleteAll();
         userRepository.deleteAll();
     }
 
-    private <T> T performAndGetResponse(MockHttpServletRequestBuilder request, Class<T> responseType) throws Exception {
-        MvcResult result = mockMvc.perform(request.with(SecurityMockMvcRequestPostProcessors.jwt()))
-            .andExpect(status().is2xxSuccessful())
-            .andReturn();
-        return objectMapper.readValue(result.getResponse().getContentAsString(), responseType);
-    }
-
-    @Test
-    void shouldCreateUser() throws Exception {
-        String json = """
-                {
-                  "name":"Alex",
-                  "surname":"Smith",
-                  "birthDate":"1995-01-01",
-                  "email":"%s"
-                }
-                """.formatted(UUID.randomUUID() + "@test.com");
-
-        UserDisplayDto createdUser = performAndGetResponse(
-            post("/api/users").contentType(MediaType.APPLICATION_JSON).content(json),
-            UserDisplayDto.class
-        );
-
-        assertThat(createdUser.getName()).isEqualTo("Alex");
-    }
-
-    @Test
-    void shouldGetUserById() throws Exception {
-        User expectedUser = createUser();
-
-        UserDisplayDto actualUser = performAndGetResponse(
-            get("/api/users/{id}", expectedUser.getId()),
-            UserDisplayDto.class
-        );
-
-        assertThat(actualUser.getId()).isEqualTo(expectedUser.getId());
-    }
-
-    @Test
-    void shouldUpdateUser() throws Exception {
-        User user = createUser();
-        String json = """
-                {
-                  "name":"Updated",
-                  "surname":"Smith",
-                  "birthDate":"1998-05-05",
-                  "email":"%s"
-                }
-                """.formatted(UUID.randomUUID() + "@test.com");
-
-        UserDisplayDto updatedUser = performAndGetResponse(
-            put("/api/users/{id}", user.getId()).contentType(MediaType.APPLICATION_JSON).content(json),
-            UserDisplayDto.class
-        );
-
-        assertThat(updatedUser.getName()).isEqualTo("Updated");
-    }
-
-    @Test
-    void shouldDeleteUser() throws Exception {
-        User user = createUser();
-
-        mockMvc.perform(delete("/api/users/{id}", user.getId())
-                .with(SecurityMockMvcRequestPostProcessors.jwt()))
-            .andExpect(status().isNoContent());
-
-        assertThat(userRepository.existsById(user.getId())).isFalse();
+    private SecurityMockMvcRequestPostProcessors.JwtRequestPostProcessor adminJwt(UUID id) {
+        return jwt()
+            .jwt(jwt -> jwt
+                .subject(id.toString())
+                .claim("sub", id.toString())
+                .claim("realm_access", Map.of("roles", List.of("ADMIN"))));
     }
 
     private User createUser() {
@@ -123,6 +65,151 @@ class UserControllerIT extends AbstractIntegrationTest {
         user.setBirthDate(LocalDate.of(1995, Month.JANUARY, 1));
         user.setEmail(UUID.randomUUID() + "@test.com");
         user.setActive(true);
+
         return userRepository.save(user);
+    }
+
+    @Test
+    void shouldCreateUser() throws Exception {
+
+        String email = UUID.randomUUID() + "@gmail.com";
+
+        String json = """
+                {
+                  "name":"Alex",
+                  "surname":"Smith",
+                  "birthDate":"1995-01-01",
+                  "email":"%s"
+                }
+                """.formatted(email);
+
+        MvcResult result = mockMvc.perform(post("/api/users")
+                .with(adminJwt(UUID.randomUUID()))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+            .andExpect(status().isCreated())
+            .andReturn();
+
+        UserDisplayDto response = objectMapper.readValue(
+            result.getResponse().getContentAsString(),
+            UserDisplayDto.class
+        );
+
+        assertThat(response.getName()).isEqualTo("Alex");
+        assertThat(response.getSurname()).isEqualTo("Smith");
+        assertThat(response.getEmail()).isEqualTo(email);
+        assertThat(response.isActive()).isTrue();
+    }
+
+    @Test
+    void shouldGetUserById() throws Exception {
+
+        User user = createUser();
+
+        MvcResult result = mockMvc.perform(get("/api/users/{id}", user.getId())
+                .with(adminJwt(UUID.randomUUID())))
+            .andExpect(status().isOk())
+            .andReturn();
+
+        UserDisplayDto response = objectMapper.readValue(
+            result.getResponse().getContentAsString(),
+            UserDisplayDto.class
+        );
+
+        assertThat(response.getId()).isEqualTo(user.getId());
+        assertThat(response.getName()).isEqualTo(user.getName());
+        assertThat(response.getEmail()).isEqualTo(user.getEmail());
+    }
+
+    @Test
+    void shouldUpdateUser() throws Exception {
+
+        User user = createUser();
+
+        String email = UUID.randomUUID() + "@gmail.com";
+
+        String json = """
+                {
+                  "name":"Updated",
+                  "surname":"UpdatedSurname",
+                  "birthDate":"1990-10-10",
+                  "email":"%s"
+                }
+                """.formatted(email);
+
+        MvcResult result = mockMvc.perform(put("/api/users/{id}", user.getId())
+                .with(adminJwt(UUID.randomUUID()))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+            .andExpect(status().isOk())
+            .andReturn();
+
+        UserDisplayDto response = objectMapper.readValue(
+            result.getResponse().getContentAsString(),
+            UserDisplayDto.class
+        );
+
+        assertThat(response.getName()).isEqualTo("Updated");
+        assertThat(response.getSurname()).isEqualTo("UpdatedSurname");
+        assertThat(response.getEmail()).isEqualTo(email);
+    }
+    @Test
+    void shouldActivateUser() throws Exception {
+
+        User user = createUser();
+        user.setActive(false);
+        userRepository.save(user);
+
+        MvcResult result = mockMvc.perform(
+                patch("/api/users/{id}/activate", user.getId())
+                    .with(adminJwt(UUID.randomUUID())))
+            .andExpect(status().isOk())
+            .andReturn();
+
+        UserDisplayDto response = objectMapper.readValue(
+            result.getResponse().getContentAsString(),
+            UserDisplayDto.class
+        );
+
+        assertThat(response.isActive()).isTrue();
+
+        User updatedUser = userRepository.findById(user.getId()).orElseThrow();
+        assertThat(updatedUser.isActive()).isTrue();
+    }
+
+    @Test
+    void shouldDeactivateUser() throws Exception {
+
+        User user = createUser();
+        user.setActive(true);
+        userRepository.save(user);
+
+        MvcResult result = mockMvc.perform(
+                patch("/api/users/{id}/deactivate", user.getId())
+                    .with(adminJwt(UUID.randomUUID())))
+            .andExpect(status().isOk())
+            .andReturn();
+
+        UserDisplayDto response = objectMapper.readValue(
+            result.getResponse().getContentAsString(),
+            UserDisplayDto.class
+        );
+
+        assertThat(response.isActive()).isFalse();
+
+        User updatedUser = userRepository.findById(user.getId()).orElseThrow();
+        assertThat(updatedUser.isActive()).isFalse();
+    }
+
+    @Test
+    void shouldDeleteUser() throws Exception {
+
+        User user = createUser();
+
+        mockMvc.perform(delete("/api/users/{id}", user.getId())
+                .with(adminJwt(UUID.randomUUID())))
+            .andExpect(status().isNoContent());
+
+        assertThat(userRepository.findById(user.getId())).isEmpty();
     }
 }

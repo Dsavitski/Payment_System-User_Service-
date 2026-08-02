@@ -143,8 +143,9 @@ public class PaymentCardService {
             return new ResourceNotFoundException(NO_SUCH_PAYMENT_CARD);
         });
         paymentCard.setActive(true);
+        PaymentCard saved = paymentCardRepository.save(paymentCard);
         log.info("Payment card {} activated", id);
-        return paymentCardMapper.toDisplayDto(paymentCard);
+        return paymentCardMapper.toDisplayDto(saved);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -157,8 +158,9 @@ public class PaymentCardService {
             return new ResourceNotFoundException(NO_SUCH_PAYMENT_CARD);
         });
         paymentCard.setActive(false);
+        PaymentCard saved = paymentCardRepository.save(paymentCard);
         log.info("Payment card {} deactivated", id);
-        return paymentCardMapper.toDisplayDto(paymentCard);
+        return paymentCardMapper.toDisplayDto(saved);
     }
 
     private void checkAccess(UUID resourceOwnerId) {

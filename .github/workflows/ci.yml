@@ -20,32 +20,16 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-      postgres:
-        image: postgres:16
-        ports:
-          - 5432:5432
-        env:
-          POSTGRES_DB: Payment_System
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
       redis:
         image: redis:7
         ports:
           - 6379:6379
 
     steps:
-
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
@@ -54,29 +38,21 @@ jobs:
           java-version: '21'
           cache: gradle
 
-
       - name: Make gradlew executable
         working-directory: userService/demo
         run: chmod +x gradlew
 
-
       - name: Build
         working-directory: userService/demo
         run: ./gradlew assemble
-        env:
-          DB_URL: jdbc:postgresql://localhost:5432/Payment_System
-          DB_USERNAME: postgres
-          DB_PASSWORD: postgres
 
-      - name: Testing
+      - name: Run Tests
         working-directory: userService/demo
         run: ./gradlew test
         env:
-          DB_URL: jdbc:postgresql://localhost:5432/Payment_System
-          DB_USERNAME: postgres
-          DB_PASSWORD: postgres
           REDIS_HOST: localhost
           REDIS_PORT: 6379
+          DOCKER_HOST: unix:///var/run/docker.sock
 
       - name: Code Analysis - SonarCloud
         if: github.event_name == 'push'
@@ -87,8 +63,8 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Set up Docker Buildx
+        if: github.event_name == 'push'
         uses: docker/setup-buildx-action@v3
-
 
       - name: Login to GitHub Container Registry
         if: github.event_name == 'push'
@@ -97,7 +73,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
 
       - name: Docker metadata
         if: github.event_name == 'push'
@@ -108,7 +83,6 @@ jobs:
           tags: |
             type=sha
             type=ref,event=branch
-
 
       - name: Build and Push Docker Image
         if: github.event_name == 'push'
