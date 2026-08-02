@@ -17,7 +17,7 @@ public class TestSecurityConfig {
     public JwtDecoder jwtDecoder() {
         return token -> Jwt.withTokenValue(token)
             .header("alg", "none")
-            .claim("sub", "123e4567-e89b-12d3-a456-426614174000") // Совпадает с TEST_USER_ID в SecurityUtil
+            .claim("sub", "123e4567-e89b-12d3-a456-426614174000")
             .claim("realm_access", Map.of("roles", List.of("ADMIN")))
             .build();
     }
