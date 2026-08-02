@@ -38,6 +38,6 @@ public final class SecurityUtil {
         }
 
         return authentication.getAuthorities().stream()
-            .anyMatch(authority -> authority.getAuthority().equals("ROLE_admin"));
+            .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
     }
 }

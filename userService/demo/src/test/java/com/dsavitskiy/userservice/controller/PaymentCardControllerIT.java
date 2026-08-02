@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -32,6 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @Transactional
+@WithMockUser(username = "admin-uuid", roles = {"ADMIN"})
 class PaymentCardControllerIT {
 
     @Autowired
@@ -75,11 +77,9 @@ class PaymentCardControllerIT {
 
     private String generateCardNumber() {
         StringBuilder number = new StringBuilder(16);
-
         for (int i = 0; i < 16; i++) {
             number.append(ThreadLocalRandom.current().nextInt(10));
         }
-
         return number.toString();
     }
 
@@ -87,7 +87,6 @@ class PaymentCardControllerIT {
         MockHttpServletRequestBuilder request,
         Class<T> responseType
     ) throws Exception {
-
         MvcResult result = mockMvc.perform(request)
             .andExpect(status().is2xxSuccessful())
             .andReturn();
@@ -102,15 +101,13 @@ class PaymentCardControllerIT {
         MockHttpServletRequestBuilder request,
         Class<T> elementType
     ) throws Exception {
-
         MvcResult result = mockMvc.perform(request)
             .andExpect(status().is2xxSuccessful())
             .andReturn();
 
         return objectMapper.readValue(
             result.getResponse().getContentAsString(),
-            objectMapper.getTypeFactory()
-                .constructCollectionType(List.class, elementType)
+            objectMapper.getTypeFactory().constructCollectionType(List.class, elementType)
         );
     }
 
@@ -134,13 +131,9 @@ class PaymentCardControllerIT {
             PaymentCardDisplayDto.class
         );
 
-        assertThat(createdCard.getNumber())
-            .isEqualTo("1234567890123456");
-        assertThat(createdCard.getHolder())
-            .isEqualTo("Alex Smith");
-
-        assertThat(paymentCardRepository.count())
-            .isEqualTo(1);
+        assertThat(createdCard.getNumber()).isEqualTo("1234567890123456");
+        assertThat(createdCard.getHolder()).isEqualTo("Alex Smith");
+        assertThat(paymentCardRepository.count()).isEqualTo(1);
     }
 
     @Test
@@ -153,12 +146,9 @@ class PaymentCardControllerIT {
             PaymentCardDisplayDto.class
         );
 
-        assertThat(actualCard.getId())
-            .isEqualTo(expectedCard.getId());
-        assertThat(actualCard.getHolder())
-            .isEqualTo(expectedCard.getHolder());
-        assertThat(actualCard.getNumber())
-            .isEqualTo(expectedCard.getNumber());
+        assertThat(actualCard.getId()).isEqualTo(expectedCard.getId());
+        assertThat(actualCard.getHolder()).isEqualTo(expectedCard.getHolder());
+        assertThat(actualCard.getNumber()).isEqualTo(expectedCard.getNumber());
     }
 
     @Test
@@ -182,16 +172,13 @@ class PaymentCardControllerIT {
             PaymentCardDisplayDto.class
         );
 
-        assertThat(updatedCard.getHolder())
-            .isEqualTo("Updated Holder");
-        assertThat(updatedCard.getNumber())
-            .isEqualTo("9999888877776666");
+        assertThat(updatedCard.getHolder()).isEqualTo("Updated Holder");
+        assertThat(updatedCard.getNumber()).isEqualTo("9999888877776666");
     }
 
     @Test
     void shouldGetCardsByUserId() throws Exception {
         User user = createUser();
-
         createCard(user, true);
         createCard(user, false);
 
@@ -200,14 +187,12 @@ class PaymentCardControllerIT {
             PaymentCardDisplayDto.class
         );
 
-        assertThat(cards)
-            .hasSize(2);
+        assertThat(cards).hasSize(2);
     }
 
     @Test
     void shouldGetActiveCardsByUserId() throws Exception {
         User user = createUser();
-
         createCard(user, true);
         createCard(user, false);
 
@@ -216,10 +201,8 @@ class PaymentCardControllerIT {
             PaymentCardDisplayDto.class
         );
 
-        assertThat(cards)
-            .hasSize(1);
-        assertThat(cards.get(0).isActive())
-            .isTrue();
+        assertThat(cards).hasSize(1);
+        assertThat(cards.get(0).isActive()).isTrue();
     }
 
     @Test
@@ -245,14 +228,11 @@ class PaymentCardControllerIT {
             new TypeReference<>() {}
         );
 
-        assertThat(cards)
-            .hasSize(1);
-
-        assertThat(response)
-            .containsAllEntriesOf(Map.of(
-                "totalElements", 1,
-                "totalPages", 1
-            ));
+        assertThat(cards).hasSize(1);
+        assertThat(response).containsAllEntriesOf(Map.of(
+            "totalElements", 1,
+            "totalPages", 1
+        ));
     }
 
     @Test
@@ -263,11 +243,8 @@ class PaymentCardControllerIT {
         mockMvc.perform(delete("/api/payment-cards/{id}", card.getId()))
             .andExpect(status().isNoContent());
 
-        assertThat(paymentCardRepository.findById(card.getId()))
-            .isEmpty();
-
-        assertThat(paymentCardRepository.count())
-            .isZero();
+        assertThat(paymentCardRepository.findById(card.getId())).isEmpty();
+        assertThat(paymentCardRepository.count()).isZero();
     }
 
     @Test
@@ -280,14 +257,8 @@ class PaymentCardControllerIT {
             PaymentCardDisplayDto.class
         );
 
-        assertThat(responseCard.isActive())
-            .isTrue();
-
-        assertThat(
-            paymentCardRepository.findById(card.getId())
-                .orElseThrow()
-                .isActive()
-        ).isTrue();
+        assertThat(responseCard.isActive()).isTrue();
+        assertThat(paymentCardRepository.findById(card.getId()).orElseThrow().isActive()).isTrue();
     }
 
     @Test
@@ -300,13 +271,7 @@ class PaymentCardControllerIT {
             PaymentCardDisplayDto.class
         );
 
-        assertThat(responseCard.isActive())
-            .isFalse();
-
-        assertThat(
-            paymentCardRepository.findById(card.getId())
-                .orElseThrow()
-                .isActive()
-        ).isFalse();
+        assertThat(responseCard.isActive()).isFalse();
+        assertThat(paymentCardRepository.findById(card.getId()).orElseThrow().isActive()).isFalse();
     }
 }

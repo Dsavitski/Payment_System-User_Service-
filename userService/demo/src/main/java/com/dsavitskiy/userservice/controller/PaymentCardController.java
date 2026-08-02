@@ -25,7 +25,7 @@ public class PaymentCardController {
     private final PaymentCardService paymentCardService;
 
     @PostMapping
-    @PreAuthorize("hasRole('admin')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PaymentCardDisplayDto> createPaymentCard(
         @Valid @RequestBody PaymentCardCreateDto paymentCardCreateDto) {
         PaymentCardDisplayDto paymentCard =
@@ -47,7 +47,7 @@ public class PaymentCardController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('admin')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PaymentCardDisplayDto> updatePaymentCard(
         @PathVariable Long id,
         @Valid @RequestBody PaymentCardCreateDto paymentCardCreateDto) {
@@ -82,7 +82,7 @@ public class PaymentCardController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('admin')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<PaymentCardDisplayDto>> getAllPaymentCards(
         @RequestParam(required = false) String name,
         @RequestParam(required = false) String surname,
@@ -93,21 +93,21 @@ public class PaymentCardController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('admin')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deletePaymentCard(@PathVariable Long id) {
         paymentCardService.deleteCard(id);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/activate")
-    @PreAuthorize("hasRole('admin')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PaymentCardDisplayDto> activatePaymentCard(
         @PathVariable Long id){
         return ResponseEntity.ok(paymentCardService.activateCard(id));
     }
 
     @PatchMapping("/{id}/deactivate")
-    @PreAuthorize("hasRole('admin')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PaymentCardDisplayDto> deactivatePaymentCard(
         @PathVariable Long id){
         return ResponseEntity.ok(paymentCardService.deactivateCard(id));

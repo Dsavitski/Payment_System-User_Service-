@@ -21,7 +21,7 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping
-    @PreAuthorize("hasRole('admin')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserDisplayDto> createUser(
         @Valid @RequestBody UserCreateDto userCreateDto) {
         UserDisplayDto createdUser = userService.createUser(userCreateDto);
@@ -46,7 +46,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('admin')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserDisplayDto> updateUser(
         @PathVariable UUID id,
         @Valid @RequestBody UserCreateDto userCreateDto) {
@@ -54,20 +54,20 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('admin')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteUser(@PathVariable UUID id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/activate")
-    @PreAuthorize("hasRole('admin')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserDisplayDto> activateUser(@PathVariable UUID id) {
         return ResponseEntity.ok(userService.activateUser(id));
     }
 
     @PatchMapping("/{id}/deactivate")
-    @PreAuthorize("hasRole('admin')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserDisplayDto> deactivateUser(@PathVariable UUID id) {
         return ResponseEntity.ok(userService.deactivateUser(id));
     }
