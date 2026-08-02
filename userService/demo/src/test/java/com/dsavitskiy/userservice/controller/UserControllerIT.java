@@ -11,41 +11,24 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import java.time.LocalDate;
 import java.time.Month;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
+@WithMockUser(roles = "ADMIN")
 class UserControllerIT extends AbstractIntegrationTest {
-
-    @TestConfiguration
-    static class TestSecurityConfig {
-        @Bean
-        public JwtDecoder jwtDecoder() {
-            return token -> Jwt.withTokenValue(token)
-                .header("alg", "none")
-                .claim("sub", "admin")
-                .claim("realm_access", Map.of("roles", List.of("ADMIN")))
-                .build();
-        }
-    }
 
     @Autowired
     private MockMvc mockMvc;
@@ -66,7 +49,7 @@ class UserControllerIT extends AbstractIntegrationTest {
     }
 
     private <T> T performAndGetResponse(MockHttpServletRequestBuilder request, Class<T> responseType) throws Exception {
-        MvcResult result = mockMvc.perform(request.with(jwt())) // 👇 jwt() теперь успешно пройдет через наш тестовый JwtDecoder
+        MvcResult result = mockMvc.perform(request)
             .andExpect(status().is2xxSuccessful())
             .andReturn();
 
@@ -163,7 +146,7 @@ class UserControllerIT extends AbstractIntegrationTest {
     void shouldDeleteUser() throws Exception {
         User user = createUser();
 
-        mockMvc.perform(delete("/api/users/{id}", user.getId()).with(jwt()))
+        mockMvc.perform(delete("/api/users/{id}", user.getId()))
             .andExpect(status().isNoContent());
 
         assertThat(userRepository.existsById(user.getId())).isFalse();
