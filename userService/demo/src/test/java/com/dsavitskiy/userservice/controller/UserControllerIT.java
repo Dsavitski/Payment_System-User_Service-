@@ -11,7 +11,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -30,6 +34,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 class UserControllerIT extends AbstractIntegrationTest {
+
+    @TestConfiguration
+    static class TestSecurityConfig {
+        @Bean
+        public JwtDecoder jwtDecoder() {
+            return token -> Jwt.withTokenValue(token)
+                .header("alg", "none")
+                .claim("sub", "admin")
+                .claim("realm_access", Map.of("roles", List.of("ADMIN")))
+                .build();
+        }
+    }
 
     @Autowired
     private MockMvc mockMvc;
@@ -50,8 +66,7 @@ class UserControllerIT extends AbstractIntegrationTest {
     }
 
     private <T> T performAndGetResponse(MockHttpServletRequestBuilder request, Class<T> responseType) throws Exception {
-        MvcResult result = mockMvc.perform(request.with(jwt().jwt(j ->
-                j.claim("realm_access", Map.of("roles", List.of("ADMIN"))))))
+        MvcResult result = mockMvc.perform(request.with(jwt())) // 👇 jwt() теперь успешно пройдет через наш тестовый JwtDecoder
             .andExpect(status().is2xxSuccessful())
             .andReturn();
 
@@ -148,8 +163,7 @@ class UserControllerIT extends AbstractIntegrationTest {
     void shouldDeleteUser() throws Exception {
         User user = createUser();
 
-        mockMvc.perform(delete("/api/users/{id}", user.getId())
-                .with(jwt().jwt(j -> j.claim("realm_access", Map.of("roles", List.of("ADMIN"))))))
+        mockMvc.perform(delete("/api/users/{id}", user.getId()).with(jwt()))
             .andExpect(status().isNoContent());
 
         assertThat(userRepository.existsById(user.getId())).isFalse();

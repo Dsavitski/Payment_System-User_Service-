@@ -12,7 +12,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -34,6 +38,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Transactional
 class PaymentCardControllerIT {
+
+    @TestConfiguration
+    static class TestSecurityConfig {
+        @Bean
+        public JwtDecoder jwtDecoder() {
+            return token -> Jwt.withTokenValue(token)
+                .header("alg", "none")
+                .claim("sub", "admin")
+                .claim("realm_access", Map.of("roles", List.of("ADMIN")))
+                .build();
+        }
+    }
 
     @Autowired
     private MockMvc mockMvc;
@@ -83,8 +99,7 @@ class PaymentCardControllerIT {
     }
 
     private <T> T performAndGetResponse(MockHttpServletRequestBuilder request, Class<T> responseType) throws Exception {
-        MvcResult result = mockMvc.perform(request.with(jwt().jwt(j ->
-                j.claim("realm_access", Map.of("roles", List.of("ADMIN"))))))
+        MvcResult result = mockMvc.perform(request.with(jwt()))
             .andExpect(status().is2xxSuccessful())
             .andReturn();
 
@@ -92,8 +107,7 @@ class PaymentCardControllerIT {
     }
 
     private <T> List<T> performAndGetListResponse(MockHttpServletRequestBuilder request, Class<T> elementType) throws Exception {
-        MvcResult result = mockMvc.perform(request.with(jwt().jwt(j ->
-                j.claim("realm_access", Map.of("roles", List.of("ADMIN"))))))
+        MvcResult result = mockMvc.perform(request.with(jwt()))
             .andExpect(status().is2xxSuccessful())
             .andReturn();
 
@@ -196,7 +210,7 @@ class PaymentCardControllerIT {
                 get("/api/payment-cards")
                     .param("page", "0")
                     .param("size", "10")
-                    .with(jwt().jwt(j -> j.claim("realm_access", Map.of("roles", List.of("ADMIN")))))
+                    .with(jwt())
             )
             .andExpect(status().isOk())
             .andReturn();
@@ -219,8 +233,7 @@ class PaymentCardControllerIT {
         User user = createUser();
         PaymentCard card = createCard(user, true);
 
-        mockMvc.perform(delete("/api/payment-cards/{id}", card.getId())
-                .with(jwt().jwt(j -> j.claim("realm_access", Map.of("roles", List.of("ADMIN"))))))
+        mockMvc.perform(delete("/api/payment-cards/{id}", card.getId()).with(jwt()))
             .andExpect(status().isNoContent());
 
         assertThat(paymentCardRepository.findById(card.getId())).isEmpty();
