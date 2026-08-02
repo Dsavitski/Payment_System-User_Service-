@@ -277,8 +277,14 @@ class PaymentCardServiceTest {
     void activateCard_shouldActivateCard() {
         paymentCard.setActive(false);
 
-        when(paymentCardRepository.findById(1L)).thenReturn(Optional.of(paymentCard));
-        when(paymentCardMapper.toDisplayDto(paymentCard)).thenReturn(displayDto);
+        when(paymentCardRepository.findById(1L))
+            .thenReturn(Optional.of(paymentCard));
+
+        when(paymentCardRepository.save(any(PaymentCard.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        when(paymentCardMapper.toDisplayDto(paymentCard))
+            .thenReturn(displayDto);
 
         PaymentCardDisplayDto result = paymentCardService.activateCard(1L);
 
@@ -286,6 +292,7 @@ class PaymentCardServiceTest {
         assertTrue(paymentCard.isActive());
 
         verify(paymentCardRepository).findById(1L);
+        verify(paymentCardRepository).save(paymentCard);
         verify(paymentCardMapper).toDisplayDto(paymentCard);
     }
 
@@ -303,8 +310,14 @@ class PaymentCardServiceTest {
     void deactivateCard_shouldDeactivateCard() {
         paymentCard.setActive(true);
 
-        when(paymentCardRepository.findById(1L)).thenReturn(Optional.of(paymentCard));
-        when(paymentCardMapper.toDisplayDto(paymentCard)).thenReturn(displayDto);
+        when(paymentCardRepository.findById(1L))
+            .thenReturn(Optional.of(paymentCard));
+
+        when(paymentCardRepository.save(any(PaymentCard.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        when(paymentCardMapper.toDisplayDto(paymentCard))
+            .thenReturn(displayDto);
 
         PaymentCardDisplayDto result = paymentCardService.deactivateCard(1L);
 
@@ -312,6 +325,7 @@ class PaymentCardServiceTest {
         assertFalse(paymentCard.isActive());
 
         verify(paymentCardRepository).findById(1L);
+        verify(paymentCardRepository).save(paymentCard);
         verify(paymentCardMapper).toDisplayDto(paymentCard);
     }
 
