@@ -20,7 +20,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponseDto> resourceNotFoundException(
-            ResourceNotFoundException ex) {
+        ResourceNotFoundException ex) {
         log.warn(LOG_WARNS, HttpStatus.NOT_FOUND.value(), ex.getMessage());
         ErrorResponseDto response = new ErrorResponseDto(
             LocalDateTime.now(ZoneId.of(MINSK_TIME_ZONE)),

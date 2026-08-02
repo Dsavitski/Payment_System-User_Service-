@@ -11,11 +11,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -29,7 +31,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public class PaymentCardControllerIT extends AbstractIntegrationTest {
+ class PaymentCardControllerIT extends AbstractIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -53,7 +55,8 @@ public class PaymentCardControllerIT extends AbstractIntegrationTest {
         return jwt()
             .jwt(jwt -> jwt
                 .claim("sub", id.toString())
-                .claim("realm_access", Map.of("roles", List.of("ADMIN"))));
+                .claim("realm_access", Map.of("roles", List.of("ADMIN"))))
+            .authorities(new SimpleGrantedAuthority("ROLE_ADMIN"));
     }
 
     private User createUser() {
@@ -61,7 +64,7 @@ public class PaymentCardControllerIT extends AbstractIntegrationTest {
         user.setId(UUID.randomUUID());
         user.setName("Alex");
         user.setSurname("Smith");
-        user.setBirthDate(LocalDate.of(1995, 1, 1));
+        user.setBirthDate(LocalDate.of(1995, Month.JANUARY, 1));
         user.setEmail(UUID.randomUUID() + "@gmail.com");
         user.setActive(true);
 

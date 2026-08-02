@@ -8,6 +8,9 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import java.util.UUID;
 
 public class SecurityUtil {
+    private SecurityUtil() {
+    }
+
 
     private static final UUID TEST_USER_ID = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
 
@@ -26,6 +29,7 @@ public class SecurityUtil {
                     try {
                         return UUID.fromString(userId);
                     } catch (IllegalArgumentException e) {
+
                     }
                 }
             }

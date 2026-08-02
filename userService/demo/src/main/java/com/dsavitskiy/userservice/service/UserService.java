@@ -32,6 +32,7 @@ public class UserService {
     public UserDisplayDto createUser(UserCreateDto userCreateDto) {
         log.info("Creating user with email {}", userCreateDto.getEmail());
         User user = userMapper.toEntity(userCreateDto);
+        user.setId(UUID.randomUUID());
         user.setActive(true);
         User savedUser = userRepository.save(user);
         log.info("User {} created", savedUser.getId());

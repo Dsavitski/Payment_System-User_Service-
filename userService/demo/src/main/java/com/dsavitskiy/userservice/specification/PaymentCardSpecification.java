@@ -18,7 +18,7 @@ public class PaymentCardSpecification {
             var predicate = cb.conjunction();
             if (firstName != null && !firstName.isBlank()) {
                 predicate = cb.and(predicate, cb.like(cb.lower(userJoin.get("name")),
-                        "%" + firstName.toLowerCase() + "%"));
+                    "%" + firstName.toLowerCase() + "%"));
             }
             if (surname != null && !surname.isBlank()) {
                 predicate = cb.and(
