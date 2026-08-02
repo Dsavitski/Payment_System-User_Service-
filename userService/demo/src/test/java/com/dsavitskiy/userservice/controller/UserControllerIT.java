@@ -1,6 +1,7 @@
 package com.dsavitskiy.userservice.controller;
 
 import com.dsavitskiy.userservice.AbstractIntegrationTest;
+import com.dsavitskiy.userservice.dto.UserDisplayDto;
 import com.dsavitskiy.userservice.entity.User;
 import com.dsavitskiy.userservice.repository.PaymentCardRepository;
 import com.dsavitskiy.userservice.repository.UserRepository;
@@ -26,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-@WithMockUser(username = "admin-uuid", roles = {"ADMIN"})
+@WithMockUser(username = "admin-uuid", authorities = {"ROLE_ADMIN"})
 class UserControllerIT extends AbstractIntegrationTest {
 
     @Autowired
@@ -69,9 +70,9 @@ class UserControllerIT extends AbstractIntegrationTest {
                 }
                 """.formatted(email);
 
-        User createdUser = performAndGetResponse(
+        UserDisplayDto createdUser = performAndGetResponse(
             post("/api/users").contentType(MediaType.APPLICATION_JSON).content(json),
-            User.class
+            UserDisplayDto.class
         );
 
         assertThat(createdUser.getName()).isEqualTo("Alex");
@@ -82,9 +83,9 @@ class UserControllerIT extends AbstractIntegrationTest {
     void shouldGetUserById() throws Exception {
         User expectedUser = createUser();
 
-        User actualUser = performAndGetResponse(
+        UserDisplayDto actualUser = performAndGetResponse(
             get("/api/users/{id}", expectedUser.getId()),
-            User.class
+            UserDisplayDto.class
         );
 
         assertThat(actualUser.getId()).isEqualTo(expectedUser.getId());
@@ -106,9 +107,9 @@ class UserControllerIT extends AbstractIntegrationTest {
                 }
                 """.formatted(updatedEmail);
 
-        User updatedResponseUser = performAndGetResponse(
+        UserDisplayDto updatedResponseUser = performAndGetResponse(
             put("/api/users/{id}", user.getId()).contentType(MediaType.APPLICATION_JSON).content(json),
-            User.class
+            UserDisplayDto.class
         );
 
         assertThat(updatedResponseUser.getName()).isEqualTo("Updated");
@@ -125,9 +126,9 @@ class UserControllerIT extends AbstractIntegrationTest {
         user.setActive(false);
         userRepository.save(user);
 
-        User activatedUser = performAndGetResponse(
+        UserDisplayDto activatedUser = performAndGetResponse(
             patch("/api/users/{id}/activate", user.getId()),
-            User.class
+            UserDisplayDto.class
         );
 
         assertThat(activatedUser.isActive()).isTrue();
@@ -140,9 +141,9 @@ class UserControllerIT extends AbstractIntegrationTest {
         user.setActive(true);
         userRepository.save(user);
 
-        User deactivatedUser = performAndGetResponse(
+        UserDisplayDto deactivatedUser = performAndGetResponse(
             patch("/api/users/{id}/deactivate", user.getId()),
-            User.class
+            UserDisplayDto.class
         );
 
         assertThat(deactivatedUser.isActive()).isFalse();

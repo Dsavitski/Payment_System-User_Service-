@@ -163,9 +163,11 @@ public class PaymentCardService {
 
     private void checkAccess(UUID resourceOwnerId) {
         var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new AccessDeniedException("Not authenticated");
+        }
         boolean isAdmin = auth.getAuthorities().stream()
-            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-
+            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ADMIN"));
         if (!isAdmin && !resourceOwnerId.toString().equals(auth.getName())) {
             log.warn("Access denied for user {} to resource owned by {}", auth.getName(), resourceOwnerId);
             throw new AccessDeniedException("Доступ запрещен: вы не являетесь владельцем этого ресурса");

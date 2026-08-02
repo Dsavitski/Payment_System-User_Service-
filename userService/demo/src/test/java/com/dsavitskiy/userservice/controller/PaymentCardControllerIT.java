@@ -33,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @Transactional
-@WithMockUser(username = "admin-uuid", roles = {"ADMIN"})
+@WithMockUser(username = "admin-uuid", authorities = {"ROLE_ADMIN"})
 class PaymentCardControllerIT {
 
     @Autowired
