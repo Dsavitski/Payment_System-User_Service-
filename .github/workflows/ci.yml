@@ -26,6 +26,7 @@ jobs:
           - 6379:6379
 
     steps:
+      - run: echo "secrets.SONAR_TOKEN=$secrets.SONAR_TOKEN"
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
