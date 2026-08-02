@@ -1,6 +1,8 @@
 package com.dsavitskiy.userservice;
 
+import com.dsavitskiy.userservice.config.TestSecurityConfig;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -11,6 +13,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
+@Import(TestSecurityConfig.class)
 public abstract class AbstractIntegrationTest {
 
     @Container
@@ -25,11 +28,7 @@ public abstract class AbstractIntegrationTest {
         registry.add("spring.datasource.url", postgres::getJdbcUrl);
         registry.add("spring.datasource.username", postgres::getUsername);
         registry.add("spring.datasource.password", postgres::getPassword);
-
         registry.add("spring.liquibase.enabled", () -> false);
-
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
-
-        registry.add("spring.security.oauth2.resourceserver.jwt.jwk-set-uri", () -> "");
     }
 }
