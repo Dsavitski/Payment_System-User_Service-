@@ -213,45 +213,40 @@ class PaymentCardServiceTest {
 
     @Test
     void updateCard_shouldUpdateCard() {
-        when(paymentCardRepository.findById(1L)).thenReturn(Optional.of(paymentCard));
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(paymentCardRepository.save(paymentCard)).thenReturn(paymentCard);
-        when(paymentCardMapper.toDisplayDto(paymentCard)).thenReturn(displayDto);
+        when(paymentCardRepository.findById(1L))
+            .thenReturn(Optional.of(paymentCard));
 
-        PaymentCardDisplayDto result = paymentCardService.updateCard(1L, createDto);
+        when(paymentCardRepository.save(paymentCard))
+            .thenReturn(paymentCard);
 
+        when(paymentCardMapper.toDisplayDto(paymentCard))
+            .thenReturn(displayDto);
+        PaymentCardDisplayDto result =
+            paymentCardService.updateCard(1L, createDto);
         assertNotNull(result);
-
         verify(paymentCardRepository).findById(1L);
-        verify(userRepository).findById(userId);
         verify(paymentCardMapper).updateEntity(createDto, paymentCard);
         verify(paymentCardRepository).save(paymentCard);
         verify(paymentCardMapper).toDisplayDto(paymentCard);
-    }
-
-    @Test
-    void updateCard_shouldThrowWhenCardNotFound() {
-        when(paymentCardRepository.findById(1L)).thenReturn(Optional.empty());
-
-        assertThrows(ResourceNotFoundException.class, () -> paymentCardService.updateCard(1L, createDto));
-
-        verify(paymentCardRepository).findById(1L);
-        verify(paymentCardRepository, never()).save(any());
         verify(userRepository, never()).findById(any());
     }
 
     @Test
-    void updateCard_shouldThrowWhenUserNotFound() {
-        when(paymentCardRepository.findById(1L)).thenReturn(Optional.of(paymentCard));
-        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+    void updateCard_shouldThrowWhenCardNotFound() {
+        when(paymentCardRepository.findById(1L))
+            .thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> paymentCardService.updateCard(1L, createDto));
+        assertThrows(
+            ResourceNotFoundException.class,
+            () -> paymentCardService.updateCard(1L, createDto)
+        );
 
         verify(paymentCardRepository).findById(1L);
-        verify(userRepository).findById(userId);
         verify(paymentCardRepository, never()).save(any());
-        verify(paymentCardMapper, never()).toDisplayDto(any());
+
+        verify(userRepository, never()).findById(any());
     }
+
 
     @Test
     void deleteCard_shouldDeleteCard() {

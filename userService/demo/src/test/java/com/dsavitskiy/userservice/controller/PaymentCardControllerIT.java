@@ -31,7 +31,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
- class PaymentCardControllerIT extends AbstractIntegrationTest {
+class PaymentCardControllerIT extends AbstractIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -51,13 +51,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         userRepository.deleteAll();
     }
 
-    private SecurityMockMvcRequestPostProcessors.JwtRequestPostProcessor adminJwt(UUID id) {
-        return jwt()
-            .jwt(jwt -> jwt
-                .claim("sub", id.toString())
-                .claim("realm_access", Map.of("roles", List.of("ADMIN"))))
-            .authorities(new SimpleGrantedAuthority("ROLE_ADMIN"));
-    }
 
     private User createUser() {
         User user = new User();
@@ -98,7 +91,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
             """.formatted(user.getId());
 
         MvcResult result = mockMvc.perform(post("/api/payment-cards")
-                .with(adminJwt(UUID.randomUUID()))
+                .with(userJwt(user.getId()))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json))
             .andExpect(status().isCreated())
@@ -150,7 +143,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
         MvcResult result = mockMvc.perform(
                 put("/api/payment-cards/{id}", card.getId())
-                    .with(adminJwt(UUID.randomUUID()))
+                    .with(userJwt(user.getId()))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(json))
             .andExpect(status().isOk())
@@ -163,6 +156,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         assertThat(response.getHolder()).isEqualTo("Updated Holder");
         assertThat(response.getNumber()).isEqualTo("9999888877776666");
     }
+
     @Test
     void shouldGetCardsByUserId() throws Exception {
 
@@ -214,56 +208,56 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         assertThat(response[0].getId()).isEqualTo(active.getId());
     }
 
-     @Test
-     void shouldActivateCard() throws Exception {
-         User user = createUser();
-         PaymentCard card = createCard(user);
+    @Test
+    void shouldActivateCard() throws Exception {
+        User user = createUser();
+        PaymentCard card = createCard(user);
 
-         card.setActive(false);
-         paymentCardRepository.save(card);
+        card.setActive(false);
+        paymentCardRepository.save(card);
 
-         MvcResult result = mockMvc.perform(
-                 patch("/api/payment-cards/{id}/activate", card.getId())
-                     .with(adminJwt(user.getId())))
-             .andExpect(status().isOk())
-             .andReturn();
+        MvcResult result = mockMvc.perform(
+                patch("/api/payment-cards/{id}/activate", card.getId())
+                    .with(adminJwt(user.getId())))
+            .andExpect(status().isOk())
+            .andReturn();
 
-         PaymentCardDisplayDto response = objectMapper.readValue(
-             result.getResponse().getContentAsString(),
-             PaymentCardDisplayDto.class
-         );
+        PaymentCardDisplayDto response = objectMapper.readValue(
+            result.getResponse().getContentAsString(),
+            PaymentCardDisplayDto.class
+        );
 
-         assertThat(response.isActive()).isTrue();
+        assertThat(response.isActive()).isTrue();
 
-         PaymentCard updated = paymentCardRepository.findById(card.getId()).orElseThrow();
-         assertThat(updated.isActive()).isTrue();
-     }
+        PaymentCard updated = paymentCardRepository.findById(card.getId()).orElseThrow();
+        assertThat(updated.isActive()).isTrue();
+    }
 
 
-     @Test
-     void shouldDeactivateCard() throws Exception {
-         User user = createUser();
-         PaymentCard card = createCard(user);
+    @Test
+    void shouldDeactivateCard() throws Exception {
+        User user = createUser();
+        PaymentCard card = createCard(user);
 
-         card.setActive(true);
-         paymentCardRepository.save(card);
+        card.setActive(true);
+        paymentCardRepository.save(card);
 
-         MvcResult result = mockMvc.perform(
-                 patch("/api/payment-cards/{id}/deactivate", card.getId())
-                     .with(adminJwt(user.getId())))
-             .andExpect(status().isOk())
-             .andReturn();
+        MvcResult result = mockMvc.perform(
+                patch("/api/payment-cards/{id}/deactivate", card.getId())
+                    .with(adminJwt(user.getId())))
+            .andExpect(status().isOk())
+            .andReturn();
 
-         PaymentCardDisplayDto response = objectMapper.readValue(
-             result.getResponse().getContentAsString(),
-             PaymentCardDisplayDto.class
-         );
+        PaymentCardDisplayDto response = objectMapper.readValue(
+            result.getResponse().getContentAsString(),
+            PaymentCardDisplayDto.class
+        );
 
-         assertThat(response.isActive()).isFalse();
+        assertThat(response.isActive()).isFalse();
 
-         PaymentCard updated = paymentCardRepository.findById(card.getId()).orElseThrow();
-         assertThat(updated.isActive()).isFalse();
-     }
+        PaymentCard updated = paymentCardRepository.findById(card.getId()).orElseThrow();
+        assertThat(updated.isActive()).isFalse();
+    }
 
     @Test
     void shouldDeletePaymentCard() throws Exception {
@@ -294,12 +288,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
             .contains("content");
     }
 
-     private SecurityMockMvcRequestPostProcessors.JwtRequestPostProcessor userJwt(UUID id) {
-         return jwt()
-             .jwt(jwt -> jwt
-                 .subject(id.toString())
-                 .claim("sub", id.toString())
-                 .claim("realm_access", Map.of("roles", List.of("USER"))))
-             .authorities(new SimpleGrantedAuthority("ROLE_USER"));
-     }
+    private SecurityMockMvcRequestPostProcessors.JwtRequestPostProcessor userJwt(UUID id) {
+        return jwt()
+            .jwt(jwt -> jwt
+                .subject(id.toString())
+                .claim("sub", id.toString())
+                .claim("realm_access", Map.of("roles", List.of("USER"))))
+            .authorities(new SimpleGrantedAuthority("ROLE_USER"));
+    }
+
+    private SecurityMockMvcRequestPostProcessors.JwtRequestPostProcessor adminJwt(UUID id) {
+        return jwt()
+            .jwt(jwt -> jwt
+                .claim("sub", id.toString())
+                .claim("realm_access", Map.of("roles", List.of("ADMIN"))))
+            .authorities(new SimpleGrantedAuthority("ROLE_ADMIN"));
+    }
 }

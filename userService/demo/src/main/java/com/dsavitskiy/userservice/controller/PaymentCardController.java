@@ -33,7 +33,7 @@ public class PaymentCardController {
     private final PaymentCardService paymentCardService;
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or #paymentCardCreateDto.userId.toString() == authentication.name")
     public ResponseEntity<PaymentCardDisplayDto> createPaymentCard(
         @Valid @RequestBody PaymentCardCreateDto paymentCardCreateDto) {
         PaymentCardDisplayDto paymentCard =
@@ -48,7 +48,7 @@ public class PaymentCardController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or @paymentCardSecurityService.isOwner(#id)")
     public ResponseEntity<PaymentCardDisplayDto> updatePaymentCard(
         @PathVariable Long id,
         @Valid @RequestBody PaymentCardCreateDto paymentCardCreateDto) {
