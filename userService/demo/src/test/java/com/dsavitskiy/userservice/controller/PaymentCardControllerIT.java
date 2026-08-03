@@ -121,7 +121,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
         MvcResult result = mockMvc.perform(
                 get("/api/payment-cards/{id}", card.getId())
-                    .with(adminJwt(user.getId())))
+                    .with(userJwt(user.getId())))
             .andExpect(status().isOk())
             .andReturn();
 
@@ -171,7 +171,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
         MvcResult result = mockMvc.perform(
                 get("/api/payment-cards/user/{userId}", user.getId())
-                    .with(adminJwt(user.getId())))
+                    .with(userJwt(user.getId())))
             .andExpect(status().isOk())
             .andReturn();
 
@@ -201,7 +201,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
         MvcResult result = mockMvc.perform(
                 get("/api/payment-cards/user/{userId}/activeCards", user.getId())
-                    .with(adminJwt(user.getId())))
+                    .with(userJwt(user.getId())))
             .andExpect(status().isOk())
             .andReturn();
 
@@ -225,7 +225,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
         MvcResult result = mockMvc.perform(
                 patch("/api/payment-cards/{id}/activate", card.getId())
-                    .with(adminJwt(UUID.randomUUID())))
+                    .with(userJwt(user.getId())))
             .andExpect(status().isOk())
             .andReturn();
 
@@ -251,7 +251,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
         MvcResult result = mockMvc.perform(
                 patch("/api/payment-cards/{id}/deactivate", card.getId())
-                    .with(adminJwt(UUID.randomUUID())))
+                    .with(userJwt(user.getId())))
             .andExpect(status().isOk())
             .andReturn();
 
@@ -294,4 +294,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         assertThat(result.getResponse().getContentAsString())
             .contains("content");
     }
+
+     private SecurityMockMvcRequestPostProcessors.JwtRequestPostProcessor userJwt(UUID id) {
+         return jwt()
+             .jwt(jwt -> jwt
+                 .subject(id.toString())
+                 .claim("sub", id.toString())
+                 .claim("realm_access", Map.of("roles", List.of("USER"))))
+             .authorities(new SimpleGrantedAuthority("ROLE_USER"));
+     }
 }

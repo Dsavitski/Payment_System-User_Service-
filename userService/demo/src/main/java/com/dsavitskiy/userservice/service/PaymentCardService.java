@@ -40,12 +40,12 @@ public class PaymentCardService {
     @CacheEvict(value = {"payment_cards", "payment_card_by_id", "payment_cards_by_user_id", "payment_cards_active"}, allEntries = true)
     public PaymentCardDisplayDto createPaymentCard(PaymentCardCreateDto paymentCardCreateDto) {
         User user = userRepository.findById(paymentCardCreateDto.getUserId()).orElseThrow(() -> {
-            log.warn("User {} not found", paymentCardCreateDto.getUserId());
+            log.info("User {} not found", paymentCardCreateDto.getUserId());
             return new ResourceNotFoundException("User with such id not found!");
         });
         long cardCount = paymentCardRepository.countByUserId(paymentCardCreateDto.getUserId());
         if (cardCount >= 5) {
-            log.warn("User {} exceeded payment card limit: {}", user.getId(), cardCount);
+            log.info("User {} exceeded payment card limit: {}", user.getId(), cardCount);
             throw new PaymentCardLimitException("Amount of cards exceeded (" + cardCount + ")");
         }
         PaymentCard paymentCard = paymentCardMapper.toEntity(paymentCardCreateDto);
@@ -59,7 +59,7 @@ public class PaymentCardService {
     @Transactional(readOnly = true)
     public PaymentCardDisplayDto getPaymentCardById(Long id) {
         PaymentCard paymentCard = paymentCardRepository.findById(id).orElseThrow(() -> {
-            log.warn(LOG_PAYMENT_CARD_NOT_FOUND, id);
+            log.info(LOG_PAYMENT_CARD_NOT_FOUND, id);
             return new ResourceNotFoundException(NO_SUCH_PAYMENT_CARD);
         });
         checkAccess(paymentCard.getUser().getId());
@@ -102,13 +102,13 @@ public class PaymentCardService {
         log.info("Updating payment card {}", id);
         PaymentCard existingPaymentCard = paymentCardRepository.findById(id)
             .orElseThrow(() -> {
-                log.warn(LOG_PAYMENT_CARD_NOT_FOUND, id);
+                log.info(LOG_PAYMENT_CARD_NOT_FOUND, id);
                 return new ResourceNotFoundException(NO_SUCH_PAYMENT_CARD);
             });
 
         User user = userRepository.findById(paymentCardCreateDto.getUserId())
             .orElseThrow(() -> {
-                log.warn("User {} not found while updating payment card {}", paymentCardCreateDto.getUserId(), id);
+                log.info("User {} not found while updating payment card {}", paymentCardCreateDto.getUserId(), id);
                 return new ResourceNotFoundException("User with such id not found!");
             });
 
@@ -126,7 +126,7 @@ public class PaymentCardService {
     public void deleteCard(Long id) {
         log.info("Deleting payment card {}", id);
         PaymentCard paymentCard = paymentCardRepository.findById(id).orElseThrow(() -> {
-            log.warn(LOG_PAYMENT_CARD_NOT_FOUND, id);
+            log.info(LOG_PAYMENT_CARD_NOT_FOUND, id);
             return new ResourceNotFoundException(NO_SUCH_PAYMENT_CARD);
         });
         paymentCardRepository.delete(paymentCard);
@@ -139,7 +139,7 @@ public class PaymentCardService {
     public PaymentCardDisplayDto activateCard(Long id) {
         log.info("Activating payment card {}", id);
         PaymentCard paymentCard = paymentCardRepository.findById(id).orElseThrow(() -> {
-            log.warn(LOG_PAYMENT_CARD_NOT_FOUND, id);
+            log.info(LOG_PAYMENT_CARD_NOT_FOUND, id);
             return new ResourceNotFoundException(NO_SUCH_PAYMENT_CARD);
         });
         paymentCard.setActive(true);
@@ -154,7 +154,7 @@ public class PaymentCardService {
     public PaymentCardDisplayDto deactivateCard(Long id) {
         log.info("Deactivating payment card {}", id);
         PaymentCard paymentCard = paymentCardRepository.findById(id).orElseThrow(() -> {
-            log.warn(LOG_PAYMENT_CARD_NOT_FOUND, id);
+            log.info(LOG_PAYMENT_CARD_NOT_FOUND, id);
             return new ResourceNotFoundException(NO_SUCH_PAYMENT_CARD);
         });
         paymentCard.setActive(false);

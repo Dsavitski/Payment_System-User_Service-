@@ -109,7 +109,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         User user = createUser();
 
         MvcResult result = mockMvc.perform(get("/api/users/{id}", user.getId())
-                .with(adminJwt(UUID.randomUUID())))
+                .with(userJwt(user.getId())))
             .andExpect(status().isOk())
             .andReturn();
 
@@ -214,4 +214,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
         assertThat(userRepository.findById(user.getId())).isEmpty();
     }
+     private SecurityMockMvcRequestPostProcessors.JwtRequestPostProcessor userJwt(UUID id) {
+         return jwt()
+             .jwt(jwt -> jwt
+                 .subject(id.toString())
+                 .claim("sub", id.toString())
+                 .claim("realm_access", Map.of("roles", List.of("USER"))))
+             .authorities(new SimpleGrantedAuthority("ROLE_USER"));
+     }
 }

@@ -21,7 +21,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponseDto> resourceNotFoundException(
         ResourceNotFoundException ex) {
-        log.warn(LOG_WARNS, HttpStatus.NOT_FOUND.value(), ex.getMessage());
+        log.info(LOG_WARNS, HttpStatus.NOT_FOUND.value(), ex.getMessage());
         ErrorResponseDto response = new ErrorResponseDto(
             LocalDateTime.now(ZoneId.of(MINSK_TIME_ZONE)),
             HttpStatus.NOT_FOUND.value(),
@@ -33,7 +33,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(PaymentCardLimitException.class)
     public ResponseEntity<ErrorResponseDto> paymentCardLimitException(
         PaymentCardLimitException ex){
-        log.warn(LOG_WARNS, HttpStatus.CONFLICT.value(), ex.getMessage());
+        log.info(LOG_WARNS, HttpStatus.CONFLICT.value(), ex.getMessage());
         ErrorResponseDto response = new ErrorResponseDto(
             LocalDateTime.now(ZoneId.of(MINSK_TIME_ZONE)),
             HttpStatus.CONFLICT.value(),
@@ -47,7 +47,7 @@ public class GlobalExceptionHandler {
         MethodArgumentNotValidException ex){
         String message = Objects.requireNonNull(
             ex.getBindingResult().getFieldError()).getDefaultMessage();
-        log.warn(LOG_WARNS, HttpStatus.BAD_REQUEST.value(), message);
+        log.info(LOG_WARNS, HttpStatus.BAD_REQUEST.value(), message);
         ErrorResponseDto response = new ErrorResponseDto(
             LocalDateTime.now(ZoneId.of(MINSK_TIME_ZONE)),
             HttpStatus.BAD_REQUEST.value(),
@@ -58,7 +58,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDto> exception(Exception ex){
-        log.error("Unexpected error ", ex);
+        log.info("Unexpected error ", ex);
         ErrorResponseDto response = new ErrorResponseDto(
             LocalDateTime.now(ZoneId.of(MINSK_TIME_ZONE)),
             HttpStatus.INTERNAL_SERVER_ERROR.value(),
