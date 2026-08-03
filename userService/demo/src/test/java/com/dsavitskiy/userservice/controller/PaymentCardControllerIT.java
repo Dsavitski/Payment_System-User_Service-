@@ -214,57 +214,56 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         assertThat(response[0].getId()).isEqualTo(active.getId());
     }
 
-    @Test
-    void shouldActivateCard() throws Exception {
+     @Test
+     void shouldActivateCard() throws Exception {
+         User user = createUser();
+         PaymentCard card = createCard(user);
 
-        User user = createUser();
-        PaymentCard card = createCard(user);
+         card.setActive(false);
+         paymentCardRepository.save(card);
 
-        card.setActive(false);
-        paymentCardRepository.save(card);
+         MvcResult result = mockMvc.perform(
+                 patch("/api/payment-cards/{id}/activate", card.getId())
+                     .with(adminJwt(user.getId())))
+             .andExpect(status().isOk())
+             .andReturn();
 
-        MvcResult result = mockMvc.perform(
-                patch("/api/payment-cards/{id}/activate", card.getId())
-                    .with(userJwt(user.getId())))
-            .andExpect(status().isOk())
-            .andReturn();
+         PaymentCardDisplayDto response = objectMapper.readValue(
+             result.getResponse().getContentAsString(),
+             PaymentCardDisplayDto.class
+         );
 
-        PaymentCardDisplayDto response = objectMapper.readValue(
-            result.getResponse().getContentAsString(),
-            PaymentCardDisplayDto.class
-        );
+         assertThat(response.isActive()).isTrue();
 
-        assertThat(response.isActive()).isTrue();
+         PaymentCard updated = paymentCardRepository.findById(card.getId()).orElseThrow();
+         assertThat(updated.isActive()).isTrue();
+     }
 
-        PaymentCard updated = paymentCardRepository.findById(card.getId()).orElseThrow();
-        assertThat(updated.isActive()).isTrue();
-    }
 
-    @Test
-    void shouldDeactivateCard() throws Exception {
+     @Test
+     void shouldDeactivateCard() throws Exception {
+         User user = createUser();
+         PaymentCard card = createCard(user);
 
-        User user = createUser();
-        PaymentCard card = createCard(user);
+         card.setActive(true);
+         paymentCardRepository.save(card);
 
-        card.setActive(true);
-        paymentCardRepository.save(card);
+         MvcResult result = mockMvc.perform(
+                 patch("/api/payment-cards/{id}/deactivate", card.getId())
+                     .with(adminJwt(user.getId())))
+             .andExpect(status().isOk())
+             .andReturn();
 
-        MvcResult result = mockMvc.perform(
-                patch("/api/payment-cards/{id}/deactivate", card.getId())
-                    .with(userJwt(user.getId())))
-            .andExpect(status().isOk())
-            .andReturn();
+         PaymentCardDisplayDto response = objectMapper.readValue(
+             result.getResponse().getContentAsString(),
+             PaymentCardDisplayDto.class
+         );
 
-        PaymentCardDisplayDto response = objectMapper.readValue(
-            result.getResponse().getContentAsString(),
-            PaymentCardDisplayDto.class
-        );
+         assertThat(response.isActive()).isFalse();
 
-        assertThat(response.isActive()).isFalse();
-
-        PaymentCard updated = paymentCardRepository.findById(card.getId()).orElseThrow();
-        assertThat(updated.isActive()).isFalse();
-    }
+         PaymentCard updated = paymentCardRepository.findById(card.getId()).orElseThrow();
+         assertThat(updated.isActive()).isFalse();
+     }
 
     @Test
     void shouldDeletePaymentCard() throws Exception {

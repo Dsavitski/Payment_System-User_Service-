@@ -133,7 +133,6 @@ public class PaymentCardService {
         log.info("Payment card {} deleted", id);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     @CacheEvict(value = {"payment_cards", "payment_card_by_id", "payment_cards_by_user_id", "payment_cards_active"}, allEntries = true)
     public PaymentCardDisplayDto activateCard(Long id) {
@@ -142,13 +141,15 @@ public class PaymentCardService {
             log.info(LOG_PAYMENT_CARD_NOT_FOUND, id);
             return new ResourceNotFoundException(NO_SUCH_PAYMENT_CARD);
         });
+
+        checkAccess(paymentCard.getUser().getId());
+
         paymentCard.setActive(true);
         PaymentCard saved = paymentCardRepository.save(paymentCard);
         log.info("Payment card {} activated", id);
         return paymentCardMapper.toDisplayDto(saved);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     @CacheEvict(value = {"payment_cards", "payment_card_by_id", "payment_cards_by_user_id", "payment_cards_active"}, allEntries = true)
     public PaymentCardDisplayDto deactivateCard(Long id) {
@@ -157,6 +158,7 @@ public class PaymentCardService {
             log.info(LOG_PAYMENT_CARD_NOT_FOUND, id);
             return new ResourceNotFoundException(NO_SUCH_PAYMENT_CARD);
         });
+        checkAccess(paymentCard.getUser().getId());
         paymentCard.setActive(false);
         PaymentCard saved = paymentCardRepository.save(paymentCard);
         log.info("Payment card {} deactivated", id);
