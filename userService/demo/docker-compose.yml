@@ -18,6 +18,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - payment-network
 
   redis:
     image: redis:7-alpine
@@ -32,27 +34,38 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - payment-network
 
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: payment_system_app
+    container_name: user-service
     restart: always
     ports:
-      - "8080:8080"
+      - "8082:8082"
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      DB_URL: ${DB_URL}
+      SERVER_PORT: 8082
+      DB_URL: jdbc:postgresql://postgres:5432/Payment_System
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
-      REDIS_HOST: ${REDIS_HOST}
-      REDIS_PORT: ${REDIS_PORT}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/payment-system
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+    networks:
+      - payment-network
+
+networks:
+  payment-network:
+    name: payment-system-network
+    driver: bridge
 
 volumes:
   postgres_data:

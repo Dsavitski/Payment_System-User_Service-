@@ -6,12 +6,13 @@ import lombok.Setter;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @Setter
 public class PaymentCardDisplayDto implements Serializable {
     private Long id;
-    private Long userId;
+    private UUID userId;
     private String number;
     private String holder;
     private LocalDate expirationDate;

@@ -3,38 +3,47 @@ databaseChangeLog:
       id: create-users
       author: Savitskiy
       changes:
+        - sql:
+            sql: CREATE EXTENSION IF NOT EXISTS pgcrypto
+
         - createTable:
             tableName: users
             columns:
               - column:
                   name: id
-                  type: bigint
-                  autoIncrement: true
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
                   constraints:
                     primaryKey: true
                     nullable: false
+
               - column:
                   name: name
                   type: varchar(255)
                   constraints:
                     nullable: false
+
               - column:
                   name: surname
                   type: varchar(255)
                   constraints:
                     nullable: false
+
               - column:
                   name: birth_date
                   type: date
                   constraints:
                     nullable: false
+
               - column:
                   name: email
                   type: varchar(255)
                   constraints:
                     nullable: false
+
               - column:
                   name: active
                   type: boolean
+                  defaultValueBoolean: true
                   constraints:
                     nullable: false
