@@ -17,4 +17,12 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     where u.id = :id
     """)
     Optional<User> findUserWithPaymentCardsById(UUID id);
+
+    @Query("""
+        select u
+        from User u
+        left join fetch u.paymentCards
+        where u.email = :email
+        """)
+    Optional<User> findUserWithPaymentCardsByEmail(String email);
 }

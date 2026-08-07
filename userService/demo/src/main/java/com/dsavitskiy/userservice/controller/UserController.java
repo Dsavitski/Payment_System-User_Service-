@@ -48,6 +48,13 @@ public class UserController {
         return ResponseEntity.ok(userService.findUserById(id));
     }
 
+    @GetMapping("/email/{email}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserDisplayDto> findUserByEmail(
+        @PathVariable String email) {
+        return ResponseEntity.ok(userService.findUserByEmail(email));
+    }
+
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserDisplayDto> updateUser(

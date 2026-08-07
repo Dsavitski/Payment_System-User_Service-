@@ -43,12 +43,26 @@ public class UserService {
     @Cacheable(value = "users", key = "#id")
     @Transactional(readOnly = true)
     public UserDisplayDto findUserById(UUID id) {
-        log.debug("Getting user {}", id);
+        log.debug("Getting user {}", id);   
         User user = userRepository.findUserWithPaymentCardsById(id)
             .orElseThrow(() -> {
                 log.warn(LOG_USER_NOT_FOUND, id);
                 return new ResourceNotFoundException(NO_SUCH_USER);
             });
+        return userMapper.toDisplayDto(user);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional(readOnly = true)
+    public UserDisplayDto findUserByEmail(String email) {
+        log.debug("Getting user by email {}", email);
+
+        User user = userRepository.findUserWithPaymentCardsByEmail(email)
+            .orElseThrow(() -> {
+                log.warn("User with email {} not found", email);
+                return new ResourceNotFoundException("User with such email not found!");
+            });
+
         return userMapper.toDisplayDto(user);
     }
 
