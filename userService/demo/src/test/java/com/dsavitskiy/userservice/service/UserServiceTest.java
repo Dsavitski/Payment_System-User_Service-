@@ -141,7 +141,7 @@ class UserServiceTest {
         when(userMapper.toDisplayDto(user))
             .thenReturn(displayDto);
 
-        UserDisplayDto result = userService.findUserByEmail(user.getEmail());
+        UserDisplayDto result = userService.findUserWithPaymentCardsByEmail(user.getEmail());
 
         assertNotNull(result);
         assertEquals(displayDto, result);
@@ -160,7 +160,7 @@ class UserServiceTest {
 
         assertThrows(
             ResourceNotFoundException.class,
-            () -> userService.findUserByEmail(email)
+            () -> userService.findUserWithPaymentCardsByEmail(email)
         );
 
         verify(userRepository).findUserWithPaymentCardsByEmail(email);

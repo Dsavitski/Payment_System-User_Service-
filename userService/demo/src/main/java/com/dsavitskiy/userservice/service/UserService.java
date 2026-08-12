@@ -43,7 +43,7 @@ public class UserService {
     @Cacheable(value = "users", key = "#id")
     @Transactional(readOnly = true)
     public UserDisplayDto findUserById(UUID id) {
-        log.debug("Getting user {}", id);   
+        log.debug("Getting user {}", id);
         User user = userRepository.findUserWithPaymentCardsById(id)
             .orElseThrow(() -> {
                 log.warn(LOG_USER_NOT_FOUND, id);
@@ -54,7 +54,7 @@ public class UserService {
 
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional(readOnly = true)
-    public UserDisplayDto findUserByEmail(String email) {
+    public UserDisplayDto findUserWithPaymentCardsByEmail(String email) {
         log.debug("Getting user by email {}", email);
 
         User user = userRepository.findUserWithPaymentCardsByEmail(email)

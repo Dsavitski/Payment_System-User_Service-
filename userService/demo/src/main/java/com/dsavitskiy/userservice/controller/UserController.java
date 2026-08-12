@@ -50,9 +50,9 @@ public class UserController {
 
     @GetMapping("/email/{email}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserDisplayDto> findUserByEmail(
+    public ResponseEntity<UserDisplayDto> findUserWithPaymentCardByEmail(
         @PathVariable String email) {
-        return ResponseEntity.ok(userService.findUserByEmail(email));
+        return ResponseEntity.ok(userService.findUserWithPaymentCardsByEmail(email));
     }
 
     @PutMapping("/{id}")
