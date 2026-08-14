@@ -48,6 +48,13 @@ public class UserController {
         return ResponseEntity.ok(userService.findUserById(id));
     }
 
+    @GetMapping("/email/{email}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserDisplayDto> findUserWithPaymentCardByEmail(
+        @PathVariable String email) {
+        return ResponseEntity.ok(userService.findUserWithPaymentCardsByEmail(email));
+    }
+
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserDisplayDto> updateUser(

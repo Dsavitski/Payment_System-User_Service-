@@ -52,6 +52,20 @@ public class UserService {
         return userMapper.toDisplayDto(user);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional(readOnly = true)
+    public UserDisplayDto findUserWithPaymentCardsByEmail(String email) {
+        log.debug("Getting user by email {}", email);
+
+        User user = userRepository.findUserWithPaymentCardsByEmail(email)
+            .orElseThrow(() -> {
+                log.warn("User with email {} not found", email);
+                return new ResourceNotFoundException("User with such email not found!");
+            });
+
+        return userMapper.toDisplayDto(user);
+    }
+
 
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional

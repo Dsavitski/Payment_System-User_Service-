@@ -122,6 +122,35 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         assertThat(response.getName()).isEqualTo(user.getName());
         assertThat(response.getEmail()).isEqualTo(user.getEmail());
     }
+     @Test
+     void shouldFindUserByEmail() throws Exception {
+
+         User user = createUser();
+
+         MvcResult result = mockMvc.perform(
+                 get("/api/users/email/{email}", user.getEmail())
+                     .with(adminJwt(UUID.randomUUID())))
+             .andExpect(status().isOk())
+             .andReturn();
+
+         UserDisplayDto response = objectMapper.readValue(
+             result.getResponse().getContentAsString(),
+             UserDisplayDto.class
+         );
+
+         assertThat(response.getId()).isEqualTo(user.getId());
+         assertThat(response.getEmail()).isEqualTo(user.getEmail());
+         assertThat(response.getName()).isEqualTo(user.getName());
+     }
+
+     @Test
+     void shouldReturnNotFoundWhenUserByEmailDoesNotExist() throws Exception {
+
+         mockMvc.perform(
+                 get("/api/users/email/{email}", "unknown@test.com")
+                     .with(adminJwt(UUID.randomUUID())))
+             .andExpect(status().isNotFound());
+     }
 
     @Test
     void shouldUpdateUser() throws Exception {

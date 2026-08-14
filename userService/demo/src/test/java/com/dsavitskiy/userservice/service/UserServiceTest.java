@@ -24,8 +24,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
@@ -122,6 +130,40 @@ class UserServiceTest {
 
         verify(userRepository).findUserWithPaymentCardsById(userId);
         verify(userMapper, never()).toDisplayDto(any());
+    }
+
+    @Test
+    void findUserByEmail_ShouldReturnUser() {
+
+        when(userRepository.findUserWithPaymentCardsByEmail(user.getEmail()))
+            .thenReturn(Optional.of(user));
+
+        when(userMapper.toDisplayDto(user))
+            .thenReturn(displayDto);
+
+        UserDisplayDto result = userService.findUserWithPaymentCardsByEmail(user.getEmail());
+
+        assertNotNull(result);
+        assertEquals(displayDto, result);
+
+        verify(userRepository).findUserWithPaymentCardsByEmail(user.getEmail());
+        verify(userMapper).toDisplayDto(user);
+    }
+
+    @Test
+    void findUserByEmail_ShouldThrowException_WhenUserNotFound() {
+
+        String email = "test@gmail.com";
+
+        when(userRepository.findUserWithPaymentCardsByEmail(email))
+            .thenReturn(Optional.empty());
+
+        assertThrows(
+            ResourceNotFoundException.class,
+            () -> userService.findUserWithPaymentCardsByEmail(email)
+        );
+
+        verify(userRepository).findUserWithPaymentCardsByEmail(email);
     }
 
     @Test
