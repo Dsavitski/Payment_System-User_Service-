@@ -37,7 +37,7 @@ services:
     networks:
       - payment-network
 
-  app:
+  user-service:
     build:
       context: .
       dockerfile: Dockerfile
